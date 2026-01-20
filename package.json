@@ -1,0 +1,44 @@
+{
+  "name": "todoreminder",
+  "version": "1.0.0",
+  "description": "Windows 待办事项软件 - 任务管理与 Obsidian 同步",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "author": "ToDoReminder Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "uuid": "^9.0.0"
+  },
+  "build": {
+    "appId": "com.todoreminder.app",
+    "productName": "ToDoReminder",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+      "language": "2052"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+    <title>ToDoReminder - 待办事项管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Manrope:wght@200..800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b794f",
+                        "primary-dark": "#125436",
+                        "secondary": "#DDA448",
+                        "tertiary": "#7BC7D9",
+                        "background-light": "#f9fafa",
+                        "background-dark": "#1a1a1a",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#262626",
+                        "text-main": "#333333",
+                        "text-sub": "#668577",
+                        "border-subtle": "#e5e9e7",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 20px -2px rgba(27, 121, 79, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.02)",
+                        "floating": "0 12px 36px -4px rgba(27, 121, 79, 0.25)",
+                    }
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 font-body">
+    <div id="app" class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <aside id="sidebar"
+            class="w-[280px] shrink-0 bg-surface-light dark:bg-surface-dark border-r border-border-subtle dark:border-gray-800 flex flex-col">
+            <!-- 应用品牌 -->
+            <div class="p-6 pb-2">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center">
+                        <img src="assets/logo.svg" alt="ToDoReminder" class="h-10 w-10 object-contain">
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-text-main dark:text-white">ToDoReminder</span>
+                        <span class="text-xs text-text-sub">v1.0.0</span>
+                    </div>
+                </div>
+
+                <!-- 添加任务按钮 -->
+                <button id="btn-add-task"
+                    class="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all duration-200 group mb-6 hover:-translate-y-0.5 active:translate-y-0">
+                    <span
+                        class="material-symbols-outlined text-[20px] group-hover:rotate-90 transition-transform duration-300">add</span>
+                    <span class="font-bold text-sm tracking-wide">添加任务</span>
+                </button>
+            </div>
+
+            <!-- 导航菜单 -->
+            <nav class="flex-1 overflow-y-auto px-4 space-y-1">
+                <a href="#"
+                    class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors border border-transparent"
+                    data-view="today">
+                    <span class="material-symbols-outlined text-[20px]"
+                        style="font-variation-settings: 'FILL' 1;">today</span>
+                    <span class="text-sm">今日</span>
+                    <span id="today-count"
+                        class="ml-auto text-xs font-bold bg-white dark:bg-gray-700 text-primary dark:text-gray-200 px-2 py-0.5 rounded-md shadow-sm border border-border-subtle dark:border-gray-600">0</span>
+                </a>
+                <a href="#"
+                    class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-sub hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main transition-colors border border-transparent"
+                    data-view="upcoming">
+                    <span class="material-symbols-outlined text-[20px]">upcoming</span>
+                    <span class="text-sm">即将到来</span>
+                </a>
+                <a href="#"
+                    class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-sub hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main transition-colors border border-transparent"
+                    data-view="calendar">
+                    <span class="material-symbols-outlined text-[20px]">calendar_month</span>
+                    <span class="text-sm">日历</span>
+                </a>
+                <a href="#"
+                    class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-sub hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main transition-colors border border-transparent"
+                    data-view="tags">
+                    <span class="material-symbols-outlined text-[20px]">tag</span>
+                    <span class="text-sm">标签</span>
+                </a>
+            </nav>
+
+            <!-- 底部 Obsidian 状态 -->
+            <div class="p-4 border-t border-border-subtle dark:border-gray-800">
+                <!-- Obsidian 连接状态 -->
+                <div id="obsidian-status"
+                    class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-border-subtle dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-medium text-text-sub">同步状态</span>
+                        <span
+                            class="material-symbols-outlined text-[16px] text-primary cursor-pointer hover:text-primary-dark"
+                            id="btn-sync-now" title="立即同步">sync</span>
+                    </div>
+                    <div class="flex items-center gap-2" id="obsidian-connection-status">
+                        <span class="material-symbols-outlined text-[16px] text-gray-400">cloud_off</span>
+                        <span class="text-xs text-text-sub">未配置 Obsidian</span>
+                    </div>
+                    <div id="last-sync-time" class="text-[10px] text-text-sub mt-1 hidden">
+                        最后同步: --
+                    </div>
+                </div>
+                <!-- 设置按钮 -->
+                <button id="btn-settings"
+                    class="mt-2 w-full h-9 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-sub text-xs font-medium border border-transparent hover:border-border-subtle"
+                    data-view="settings">
+                    <span class="material-symbols-outlined text-[18px]">settings</span>
+                    设置
+                </button>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main
+            class="flex-1 flex flex-col bg-background-light dark:bg-background-dark relative min-h-0 h-full overflow-hidden">
+            <!-- 今日视图 -->
+            <div id="view-today" class="view flex-1 flex flex-col min-h-0">
+                <header
+                    class="pt-10 px-10 pb-6 shrink-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+                    <div class="flex items-end justify-between w-full max-w-4xl">
+                        <div class="flex flex-col gap-2">
+                            <h1 class="font-display text-3xl font-black text-text-main dark:text-white tracking-tight">
+                                今日任务
+                            </h1>
+                            <div class="flex items-center gap-2 text-text-sub dark:text-gray-400">
+                                <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                                <span id="current-date" class="text-sm font-medium tracking-wide uppercase"></span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btn-sort"
+                                class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-text-sub transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">sort</span>
+                            </button>
+                            <button id="btn-more"
+                                class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-text-sub transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">more_horiz</span>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto px-10 pb-12 space-y-5">
+                    <!-- 进度统计 -->
+                    <div id="progress-card"
+                        class="mb-8 p-6 rounded-2xl bg-primary/5 border border-primary/5 flex items-center justify-between max-w-4xl shadow-sm hover:shadow-md transition-shadow cursor-default">
+                        <div>
+                            <p id="remaining-count"
+                                class="font-display font-black text-primary dark:text-primary-dark text-xl">剩余 0 个任务
+                            </p>
+                            <p id="motivation-text" class="text-sm text-text-sub dark:text-gray-400 font-medium mt-1">
+                                添加任务开始今天的工作</p>
+                        </div>
+                        <div id="progress-ring" class="h-20 w-20 relative flex items-center justify-center">
+                            <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="36" stroke="none" stroke-width="0" fill="white"></circle>
+                                <circle id="progress-circle" cx="40" cy="40" r="36" stroke="#1b794f" stroke-width="5"
+                                    fill="none" stroke-linecap="round" stroke-dasharray="226.2"
+                                    stroke-dashoffset="226.2" style="transition: stroke-dashoffset 0.5s ease;"></circle>
+                            </svg>
+                            <span id="progress-percent" class="absolute text-base font-bold text-primary">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- 任务列表 -->
+                    <div id="task-list" class="space-y-3 max-w-4xl">
+                        <!-- 任务卡片将动态插入 -->
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div id="empty-state"
+                        class="py-12 flex flex-col items-center justify-center text-center opacity-40 hidden">
+                        <span class="material-symbols-outlined text-[48px] text-text-sub mb-3">check_circle</span>
+                        <p class="font-display text-sm text-text-sub">暂无任务，点击上方按钮添加</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 即将到来视图 -->
+            <div id="view-upcoming" class="view flex-1 flex-col min-h-0 hidden">
+                <header
+                    class="pt-10 px-10 pb-6 shrink-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+                    <div class="w-full max-w-4xl flex items-end justify-between">
+                        <div class="flex flex-col gap-2">
+                            <h1 class="font-display text-3xl font-black text-text-main dark:text-white tracking-tight">
+                                即将到来
+                            </h1>
+                            <p class="text-sm text-text-sub">未来 7 天的任务</p>
+                        </div>
+                    </div>
+                </header>
+                <div id="upcoming-task-list" class="flex-1 overflow-y-auto px-10 pb-12 space-y-6 max-w-4xl">
+                    <!-- 按日期分组的任务将动态生成 -->
+                </div>
+            </div>
+
+            <!-- 日历视图 -->
+            <div id="view-calendar" class="view flex-1 flex-col min-h-0 hidden">
+                <header
+                    class="h-16 flex-shrink-0 bg-surface-light dark:bg-surface-dark border-b border-border-subtle dark:border-gray-800 flex items-center justify-between px-6 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <h1 id="calendar-title"
+                            class="text-2xl font-bold text-text-main dark:text-white font-display tracking-tight">
+                            2026年1月</h1>
+                        <div
+                            class="flex items-center border border-border-subtle dark:border-gray-700 rounded-lg p-0.5 bg-white dark:bg-gray-800">
+                            <button id="btn-prev-month"
+                                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-text-sub">
+                                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+                            <button id="btn-next-month"
+                                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-text-sub">
+                                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                            <button id="btn-week-view"
+                                class="px-4 py-1.5 text-sm font-medium text-text-sub hover:text-text-main transition-all rounded-md">周</button>
+                            <button id="btn-month-view"
+                                class="px-4 py-1.5 text-sm font-bold text-primary bg-white dark:bg-gray-700 shadow-sm rounded-md transition-all">月</button>
+                        </div>
+                        <button id="btn-calendar-add"
+                            class="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white pl-3 pr-4 py-2 rounded-lg shadow-md shadow-primary/20 transition-all">
+                            <span class="material-symbols-outlined text-[20px]">add</span>
+                            <span class="text-sm font-bold">新建任务</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 p-6 overflow-y-auto">
+                    <div class="flex flex-col h-full min-h-[600px]">
+                        <!-- 星期头部 -->
+                        <div class="grid grid-cols-7 mb-2">
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">日</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">一</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">二</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">三</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">四</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">五</div>
+                            <div class="text-left pl-2 text-xs font-bold text-text-sub uppercase tracking-wider">六</div>
+                        </div>
+                        <!-- 日历格子 -->
+                        <div id="calendar-grid"
+                            class="flex-1 grid grid-cols-7 gap-px bg-border-subtle dark:bg-gray-700 border border-border-subtle dark:border-gray-700 rounded-xl overflow-hidden shadow-sm"
+                            style="grid-template-rows: repeat(5, 1fr);">
+                            <!-- 日期格子将动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签管理视图 -->
+            <div id="view-tags" class="view flex-1 flex-col min-h-0 hidden">
+                <header
+                    class="h-16 flex-shrink-0 bg-surface-light dark:bg-surface-dark border-b border-border-subtle dark:border-gray-800 flex items-center px-8 shadow-sm">
+                    <h1 class="text-2xl font-bold text-text-main dark:text-white font-display tracking-tight">标签管理</h1>
+                </header>
+                <div class="flex-1 overflow-y-auto p-8">
+                    <div class="max-w-4xl mx-auto">
+                        <p class="text-text-sub text-sm mb-6">管理您的标签。标签可以帮助您在庞大的任务列表中快速筛选出特定类型的工作项。在创建任务时，您可以快速选择已创建的标签。
+                        </p>
+                        <div id="tags-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- 标签卡片将动态生成 -->
+                        </div>
+                        <div id="tags-empty" class="text-center py-12 hidden">
+                            <span class="material-symbols-outlined text-[48px] text-text-sub mb-3">label_off</span>
+                            <p class="text-text-sub">暂无标签，点击上方按钮添加</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设置视图 -->
+            <div id="view-settings" class="view flex-1 flex-col min-h-0 hidden">
+                <header
+                    class="h-16 flex items-center justify-between px-8 bg-surface-light dark:bg-surface-dark border-b border-border-subtle dark:border-gray-800">
+                    <h1 class="text-xl font-display font-bold text-text-main dark:text-white">同步与应用设置</h1>
+                    <div class="flex items-center gap-3">
+                        <button id="btn-reset-settings"
+                            class="px-4 py-2 text-sm font-medium text-text-sub hover:text-text-main hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors">
+                            重置默认
+                        </button>
+                        <button id="btn-save-settings"
+                            class="px-5 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-md shadow-sm transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">save</span>
+                            保存设置
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto p-8">
+                    <div class="max-w-4xl mx-auto space-y-8">
+                        <!-- Obsidian 路径设置 -->
+                        <section
+                            class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-border-subtle dark:border-gray-800 p-6">
+                            <div
+                                class="flex items-center gap-2 mb-4 pb-2 border-b border-border-subtle dark:border-gray-800">
+                                <span class="material-symbols-outlined text-primary">folder_data</span>
+                                <h2 class="text-base font-bold text-text-main dark:text-white">Obsidian 库路径</h2>
+                            </div>
+                            <div class="space-y-4">
+                                <label class="block">
+                                    <span class="text-sm font-medium text-text-main dark:text-gray-200">本地文件夹路径</span>
+                                    <span class="text-xs text-text-sub ml-2">选择您的 Obsidian 仓库根目录</span>
+                                </label>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-1 group">
+                                        <div
+                                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <span
+                                                class="material-symbols-outlined text-text-sub group-focus-within:text-primary transition-colors text-[20px]">folder_open</span>
+                                        </div>
+                                        <input id="input-obsidian-path" type="text" readonly
+                                            class="block w-full rounded-md border-border-subtle dark:border-gray-700 bg-background-light dark:bg-background-dark py-2 pl-10 pr-3 text-sm font-mono text-text-main dark:text-gray-200 cursor-not-allowed"
+                                            placeholder="点击浏览选择文件夹">
+                                    </div>
+                                    <button id="btn-browse-folder"
+                                        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-border-subtle dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium text-text-main dark:text-gray-200 transition-colors shadow-sm">
+                                        浏览...
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 同步设置 -->
+                        <section
+                            class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-border-subtle dark:border-gray-800 p-6">
+                            <div
+                                class="flex items-center gap-2 mb-4 pb-2 border-b border-border-subtle dark:border-gray-800">
+                                <span class="material-symbols-outlined text-primary">sync</span>
+                                <h2 class="text-base font-bold text-text-main dark:text-white">同步设置</h2>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div
+                                    class="flex items-center justify-between p-3 rounded-md border border-border-subtle dark:border-gray-700 bg-background-light/30 dark:bg-background-dark/30">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-text-main dark:text-white">自动同步</span>
+                                        <span class="text-xs text-text-sub mt-0.5">每日自动推送变更</span>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input id="toggle-auto-sync" type="checkbox" class="sr-only peer" checked>
+                                        <div
+                                            class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                        </div>
+                                    </label>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between p-3 rounded-md border border-border-subtle dark:border-gray-700 bg-background-light/30 dark:bg-background-dark/30">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-text-main dark:text-white">同步时间</span>
+                                        <span class="text-xs text-text-sub mt-0.5">后台执行时间</span>
+                                    </div>
+                                    <input id="input-sync-time" type="time" value="08:00"
+                                        class="block rounded-md border-border-subtle dark:border-gray-700 bg-white dark:bg-surface-dark py-1 px-2 text-sm font-mono text-text-main dark:text-white shadow-sm">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-end">
+                                <button id="btn-sync-now"
+                                    class="px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-md transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">sync</span>
+                                    立即同步
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- Windows 设置 -->
+                        <section
+                            class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-border-subtle dark:border-gray-800 p-6">
+                            <div
+                                class="flex items-center gap-2 mb-4 pb-2 border-b border-border-subtle dark:border-gray-800">
+                                <span class="material-symbols-outlined text-primary">desktop_windows</span>
+                                <h2 class="text-base font-bold text-text-main dark:text-white">Windows 设置</h2>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-8">
+                                    <div class="flex items-center gap-3">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input id="toggle-minimize-tray" type="checkbox" class="sr-only peer"
+                                                checked>
+                                            <div
+                                                class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                            </div>
+                                        </label>
+                                        <span class="text-sm font-medium text-text-main dark:text-white">最小化到托盘</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input id="toggle-start-windows" type="checkbox" class="sr-only peer">
+                                            <div
+                                                class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                                            </div>
+                                        </label>
+                                        <span class="text-sm font-medium text-text-main dark:text-white">开机自启</span>
+                                    </div>
+                                </div>
+                                <div class="pt-4 border-t border-border-subtle dark:border-gray-800">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="text-sm font-medium text-text-main dark:text-white">全局快捷键</label>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div
+                                            class="flex-1 flex items-center gap-2 p-2 rounded-md border border-border-subtle dark:border-gray-700 bg-background-light dark:bg-background-dark shadow-inner">
+                                            <span
+                                                class="material-symbols-outlined text-text-sub text-lg">keyboard</span>
+                                            <div id="shortcut-display" class="flex gap-1">
+                                                <kbd
+                                                    class="px-2 py-1 bg-white dark:bg-surface-dark border border-border-subtle dark:border-gray-600 rounded text-xs font-semibold text-text-sub shadow-sm">Ctrl</kbd>
+                                                <kbd
+                                                    class="px-2 py-1 bg-white dark:bg-surface-dark border border-border-subtle dark:border-gray-600 rounded text-xs font-semibold text-text-sub shadow-sm">Shift</kbd>
+                                                <kbd
+                                                    class="px-2 py-1 bg-white dark:bg-surface-dark border border-border-subtle dark:border-gray-600 rounded text-xs font-semibold text-text-sub shadow-sm">O</kbd>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-text-sub mt-2">用于在系统任何位置快速唤起快速记录窗口。</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 同步状态 -->
+                        <div id="sync-status"
+                            class="bg-primary/5 rounded-lg border border-primary/10 p-4 flex items-center gap-4">
+                            <div class="p-2 bg-primary/10 rounded-full text-primary">
+                                <span class="material-symbols-outlined">sync_saved_locally</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-primary">同步状态: 就绪</h3>
+                                <p id="last-sync-time" class="text-xs text-text-sub mt-0.5">尚未同步</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加任务模态框 -->
+    <div id="modal-add-task" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
+        <div
+            class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-xl shadow-2xl w-full max-w-[640px] mx-4 border border-white/40 dark:border-white/10">
+            <!-- 头部 -->
+            <div class="flex items-center justify-between px-5 pt-4 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-center w-6 h-6 bg-primary/10 rounded-md">
+                        <span class="material-symbols-outlined text-primary text-[16px]">add_task</span>
+                    </div>
+                    <h3 class="text-gray-800 dark:text-gray-100 text-sm font-semibold tracking-wide">快速任务录入</h3>
+                </div>
+                <button id="btn-close-modal"
+                    class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/10">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+
+            <!-- 表单内容 -->
+            <form id="form-add-task" class="flex flex-col">
+                <div class="px-6 py-3">
+                    <!-- 任务标题（大文本框） -->
+                    <textarea id="input-task-title" required
+                        class="w-full bg-transparent border-none p-0 text-xl font-medium text-gray-800 dark:text-white placeholder:text-gray-400/80 focus:ring-0 resize-none leading-relaxed min-h-[90px]"
+                        placeholder="输入任务标题..."></textarea>
+
+                    <!-- 已选标签预览区 -->
+                    <div id="selected-tags-preview" class="flex gap-2 flex-wrap mt-2 mb-4">
+                        <!-- 动态显示已选的优先级、标签等 -->
+                    </div>
+                </div>
+
+                <!-- 隐藏的表单字段 -->
+                <input type="hidden" id="input-task-time" value="">
+                <input type="hidden" id="input-task-date" value="">
+                <input type="hidden" id="select-task-priority" value="中">
+                <input type="hidden" id="select-task-repeat" value="">
+                <input type="hidden" id="input-task-tags" value="">
+
+                <!-- 底部工具栏 -->
+                <div
+                    class="px-5 py-4 flex items-center justify-between bg-gray-50/60 dark:bg-black/20 rounded-b-xl border-t border-gray-200/50 dark:border-white/5">
+                    <div class="flex items-center gap-1">
+                        <!-- 优先级按钮 -->
+                        <button type="button" id="btn-priority"
+                            class="w-9 h-9 flex items-center justify-center rounded-md text-gray-500 hover:text-secondary hover:bg-secondary/10 transition-all"
+                            title="优先级">
+                            <span class="material-symbols-outlined text-[20px]">flag</span>
+                        </button>
+                        <!-- 标签按钮 -->
+                        <button type="button" id="btn-tag"
+                            class="w-9 h-9 flex items-center justify-center rounded-md text-gray-500 hover:text-tertiary hover:bg-tertiary/10 transition-all"
+                            title="标签">
+                            <span class="material-symbols-outlined text-[20px]">tag</span>
+                        </button>
+                        <!-- 时间按钮 -->
+                        <button type="button" id="btn-time"
+                            class="w-9 h-9 flex items-center justify-center rounded-md text-gray-500 hover:text-primary hover:bg-primary/10 transition-all"
+                            title="时间">
+                            <span class="material-symbols-outlined text-[20px]">schedule</span>
+                        </button>
+                        <!-- 重复周期按钮 -->
+                        <button type="button" id="btn-repeat"
+                            class="w-9 h-9 flex items-center justify-center rounded-md text-gray-500 hover:text-primary hover:bg-primary/10 transition-all"
+                            title="重复周期">
+                            <span class="material-symbols-outlined text-[20px]">repeat</span>
+                        </button>
+                        <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+                        <!-- 日期按钮 -->
+                        <button type="button" id="btn-date"
+                            class="w-9 h-9 flex items-center justify-center rounded-md text-gray-500 hover:text-primary hover:bg-primary/10 transition-all"
+                            title="日期">
+                            <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="btn-cancel-task"
+                            class="px-5 py-2 rounded-md text-gray-600 dark:text-gray-300 font-medium text-sm hover:bg-gray-200/80 dark:hover:bg-white/10 transition-colors">
+                            取消
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 rounded-md text-white font-medium text-sm bg-primary shadow-sm hover:bg-primary-dark transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                            添加
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

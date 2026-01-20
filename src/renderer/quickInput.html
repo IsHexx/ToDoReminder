@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+    <title>快速任务录入</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: transparent;
+            -webkit-app-region: drag;
+        }
+
+        .container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 8px;
+            -webkit-app-region: drag;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-box {
+            width: 24px;
+            height: 24px;
+            background: rgba(27, 121, 79, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-box .material-symbols-outlined {
+            color: #1b794f;
+            font-size: 16px;
+        }
+
+        .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #666;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-left: 8px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        .btn-close {
+            -webkit-app-region: no-drag;
+            background: transparent;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .btn-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .content {
+            padding: 0 24px 12px;
+            -webkit-app-region: no-drag;
+        }
+
+        .input-title {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+            outline: none;
+            resize: none;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .input-title::placeholder {
+            color: #999;
+        }
+
+        .tags-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px 4px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid;
+        }
+
+        .tag-priority {
+            background: rgba(221, 164, 72, 0.1);
+            color: #DDA448;
+            border-color: rgba(221, 164, 72, 0.2);
+        }
+
+        .tag-priority.high {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .tag-priority.low {
+            background: rgba(123, 199, 217, 0.1);
+            color: #7BC7D9;
+            border-color: rgba(123, 199, 217, 0.2);
+        }
+
+        .tag-label {
+            background: rgba(123, 199, 217, 0.1);
+            color: #5aa8ba;
+            border-color: rgba(123, 199, 217, 0.2);
+        }
+
+        .tag-repeat {
+            background: rgba(27, 121, 79, 0.1);
+            color: #1b794f;
+            border-color: rgba(27, 121, 79, 0.2);
+        }
+
+        .tag .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.03);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            -webkit-app-region: no-drag;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .toolbar-btn:hover.priority {
+            color: #DDA448;
+            background: rgba(221, 164, 72, 0.1);
+        }
+
+        .toolbar-btn:hover.tag {
+            color: #5aa8ba;
+            background: rgba(123, 199, 217, 0.1);
+        }
+
+        .toolbar-btn:hover.time {
+            color: #1b794f;
+            background: rgba(27, 121, 79, 0.1);
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background: #ddd;
+            margin: 0 8px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-submit {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            border: none;
+            background: #1b794f;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s;
+            box-shadow: 0 2px 8px rgba(27, 121, 79, 0.3);
+        }
+
+        .btn-submit:hover {
+            background: #156340;
+        }
+
+        .btn-submit .material-symbols-outlined {
+            font-size: 18px;
+        }
+
+        .priority-menu,
+        .repeat-menu {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #eee;
+            padding: 4px;
+            margin-bottom: 4px;
+            z-index: 100;
+        }
+
+        .priority-menu.show,
+        .repeat-menu.show {
+            display: block;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover {
+            background: #f5f5f5;
+        }
+
+        .menu-item .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .menu-item .dot.high {
+            background: #ef4444;
+        }
+
+        .menu-item .dot.medium {
+            background: #DDA448;
+        }
+
+        .menu-item .dot.low {
+            background: #7BC7D9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="icon-box">
+                    <span class="material-symbols-outlined">add_task</span>
+                </div>
+                <span class="title">快速任务录入</span>
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    已连接
+                </div>
+            </div>
+            <button class="btn-close" id="btn-close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="content">
+            <textarea id="input-title" class="input-title" placeholder="输入任务标题..." rows="2"></textarea>
+            <div class="tags-row" id="tags-row">
+                <!-- 动态添加的标签 -->
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="toolbar">
+                <div style="position: relative;">
+                    <button class="toolbar-btn priority" id="btn-priority" title="优先级">
+                        <span class="material-symbols-outlined">flag</span>
+                    </button>
+                    <div class="priority-menu" id="priority-menu">
+                        <div class="menu-item" data-value="高"><span class="dot high"></span>高优先级</div>
+                        <div class="menu-item" data-value="中"><span class="dot medium"></span>中优先级</div>
+                        <div class="menu-item" data-value="低"><span class="dot low"></span>低优先级</div>
+                    </div>
+                </div>
+                <button class="toolbar-btn tag" id="btn-tag" title="标签">
+                    <span class="material-symbols-outlined">tag</span>
+                </button>
+                <button class="toolbar-btn time" id="btn-time" title="时间">
+                    <span class="material-symbols-outlined">schedule</span>
+                </button>
+                <div style="position: relative;">
+                    <button class="toolbar-btn time" id="btn-repeat" title="重复周期">
+                        <span class="material-symbols-outlined">repeat</span>
+                    </button>
+                    <div class="repeat-menu" id="repeat-menu">
+                        <div class="menu-item" data-value="">不重复</div>
+                        <div class="menu-item" data-value="每天">每天</div>
+                        <div class="menu-item" data-value="每周">每周</div>
+                        <div class="menu-item" data-value="每月">每月</div>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn-cancel" id="btn-cancel">取消</button>
+                <button class="btn-submit" id="btn-submit">
+                    <span class="material-symbols-outlined">add</span>
+                    添加
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const taskData = {
+            title: '',
+            priority: '中',
+            tags: [],
+            repeat: null,
+            time: null
+        };
+
+        const $ = (sel) => document.querySelector(sel);
+
+        // 关闭窗口
+        $('#btn-close').onclick = () => window.electronAPI?.closeQuickInput();
+        $('#btn-cancel').onclick = () => window.electronAPI?.closeQuickInput();
+
+        // 输入标题
+        $('#input-title').addEventListener('input', (e) => {
+            taskData.title = e.target.value;
+        });
+
+        // 回车提交
+        $('#input-title').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitTask();
+            }
+            if (e.key === 'Escape') {
+                window.electronAPI?.closeQuickInput();
+            }
+        });
+
+        // 优先级菜单
+        $('#btn-priority').onclick = (e) => {
+            e.stopPropagation();
+            $('#priority-menu').classList.toggle('show');
+            $('#repeat-menu').classList.remove('show');
+        };
+
+        $('#priority-menu').querySelectorAll('.menu-item').forEach(item => {
+            item.onclick = () => {
+                taskData.priority = item.dataset.value;
+                $('#priority-menu').classList.remove('show');
+                renderTags();
+            };
+        });
+
+        // 重复菜单
+        $('#btn-repeat').onclick = (e) => {
+            e.stopPropagation();
+            $('#repeat-menu').classList.toggle('show');
+            $('#priority-menu').classList.remove('show');
+        };
+
+        $('#repeat-menu').querySelectorAll('.menu-item').forEach(item => {
+            item.onclick = () => {
+                taskData.repeat = item.dataset.value || null;
+                $('#repeat-menu').classList.remove('show');
+                renderTags();
+            };
+        });
+
+        // 点击其他区域关闭菜单
+        document.addEventListener('click', () => {
+            $('#priority-menu').classList.remove('show');
+            $('#repeat-menu').classList.remove('show');
+        });
+
+        // 简单标签输入 (暂用 prompt)
+        $('#btn-tag').onclick = () => {
+            const tag = prompt('输入标签名称:');
+            if (tag && tag.trim()) {
+                if (!taskData.tags.includes(tag.trim())) {
+                    taskData.tags.push(tag.trim());
+                    renderTags();
+                }
+            }
+        };
+
+        // 时间输入
+        $('#btn-time').onclick = () => {
+            const time = prompt('输入时间 (HH:MM):', taskData.time || '09:00');
+            if (time && /^\d{2}:\d{2}$/.test(time)) {
+                taskData.time = time;
+                renderTags();
+            }
+        };
+
+        // 渲染标签
+        function renderTags() {
+            const row = $('#tags-row');
+            let html = '';
+
+            // 优先级
+            const pClass = taskData.priority === '高' ? 'high' : taskData.priority === '低' ? 'low' : '';
+            html += `<div class="tag tag-priority ${pClass}">
+                <span class="material-symbols-outlined">flag</span>
+                <span>${taskData.priority}</span>
+            </div>`;
+
+            // 标签
+            taskData.tags.forEach(t => {
+                html += `<div class="tag tag-label">
+                    <span class="material-symbols-outlined">tag</span>
+                    <span>${t}</span>
+                </div>`;
+            });
+
+            // 重复
+            if (taskData.repeat) {
+                html += `<div class="tag tag-repeat">
+                    <span class="material-symbols-outlined">repeat</span>
+                    <span>${taskData.repeat}</span>
+                </div>`;
+            }
+
+            // 时间
+            if (taskData.time) {
+                html += `<div class="tag tag-repeat">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span>${taskData.time}</span>
+                </div>`;
+            }
+
+            row.innerHTML = html;
+        }
+
+        // 提交任务
+        function submitTask() {
+            const title = taskData.title.trim();
+            if (!title) {
+                $('#input-title').focus();
+                return;
+            }
+
+            const task = {
+                id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                title,
+                time: taskData.time,
+                priority: taskData.priority,
+                repeat: taskData.repeat,
+                tags: taskData.tags,
+                date: new Date().toISOString().split('T')[0],
+                status: '待办',
+                createdAt: new Date().toISOString()
+            };
+
+            if (window.electronAPI) {
+                window.electronAPI.quickAddTask(task);
+            }
+        }
+
+        $('#btn-submit').onclick = submitTask;
+
+        // 初始化
+        renderTags();
+        $('#input-title').focus();
+    </script>
+</body>
+
+</html>

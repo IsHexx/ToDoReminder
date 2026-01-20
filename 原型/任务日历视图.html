@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>任务日历视图 (桌面端)</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b794f",
+                        "background-light": "#f9fafa",
+                        "background-dark": "#1a1a1a",
+                        "mustard": "#DDA448",
+                        "sky": "#7BC7D9",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#252525",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans SC", "Epilogue", "sans-serif"],
+                        "body": ["Noto Sans SC", "Manrope", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+                        "inner-light": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}.desktop-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.desktop-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.desktop-scroll::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+.desktop-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8);
+}
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#121715] dark:text-[#e0e0e0] font-body transition-colors duration-200 h-screen overflow-hidden">
+<div class="flex h-full w-full bg-background-light dark:bg-background-dark overflow-hidden">
+<aside class="w-[280px] flex-shrink-0 flex flex-col bg-surface-light dark:bg-surface-dark border-r border-gray-200 dark:border-[#333] z-30">
+<div class="h-16 flex items-center px-6 border-b border-gray-100 dark:border-[#333]/50">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white mr-3 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<span class="text-lg font-bold font-display tracking-tight text-[#121715] dark:text-white">任务管理器</span>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 group transition-all">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">home</span>
+<span class="text-sm font-medium group-hover:text-[#121715] dark:group-hover:text-white transition-colors">首页</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-bold transition-all">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-sm">日历</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 group transition-all">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">folder_open</span>
+<span class="text-sm font-medium group-hover:text-[#121715] dark:group-hover:text-white transition-colors">项目</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 group transition-all">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">settings</span>
+<span class="text-sm font-medium group-hover:text-[#121715] dark:group-hover:text-white transition-colors">设置</span>
+</button>
+</nav>
+<div class="p-4 border-t border-gray-100 dark:border-[#333]">
+<div class="bg-white dark:bg-[#333]/50 rounded-xl p-4 border border-gray-200 dark:border-[#444] shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">同步状态</span>
+<span class="material-symbols-outlined text-primary text-[18px] animate-spin-slow">sync</span>
+</div>
+<div class="flex items-center gap-2 mb-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-sm font-bold text-[#121715] dark:text-white">已连接至 Obsidian</span>
+</div>
+<div class="text-xs text-gray-400 dark:text-gray-500 pl-4">最后同步: 2023-10-27 09:00</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+<header class="h-16 flex-shrink-0 bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-[#333] flex items-center justify-between px-6 z-20 shadow-sm">
+<div class="flex items-center gap-4">
+<h1 class="text-2xl font-bold text-[#121715] dark:text-white font-display tracking-tight">2023年10月</h1>
+<div class="flex items-center border border-gray-200 dark:border-[#444] rounded-lg p-0.5 bg-white dark:bg-[#2a2a2a]">
+<button class="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition-colors text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition-colors text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex bg-gray-100 dark:bg-[#333] p-1 rounded-lg">
+<button class="px-4 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all rounded-md">
+                        周
+                    </button>
+<button class="px-4 py-1.5 text-sm font-bold text-primary bg-white dark:bg-[#444] shadow-sm rounded-md transition-all">
+                        月
+                    </button>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-[#444]"></div>
+<button class="flex items-center gap-2 bg-primary hover:bg-[#156340] active:scale-95 text-white pl-3 pr-4 py-2 rounded-lg shadow-md shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="text-sm font-bold">新建任务</span>
+</button>
+</div>
+</header>
+<div class="flex-1 p-6 overflow-y-auto desktop-scroll">
+<div class="flex flex-col h-full min-h-[600px]">
+<div class="grid grid-cols-7 mb-2">
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">日</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">一</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">二</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">三</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">四</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">五</div>
+<div class="text-left pl-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-display">六</div>
+</div>
+<div class="flex-1 grid grid-cols-7 grid-rows-5 gap-px bg-gray-200 dark:bg-[#444] border border-gray-200 dark:border-[#444] rounded-xl overflow-hidden shadow-sm">
+<div class="bg-background-light dark:bg-background-dark p-2 text-gray-300 dark:text-gray-600 font-medium text-sm">28</div>
+<div class="bg-background-light dark:bg-background-dark p-2 text-gray-300 dark:text-gray-600 font-medium text-sm">29</div>
+<div class="bg-background-light dark:bg-background-dark p-2 text-gray-300 dark:text-gray-600 font-medium text-sm">30</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">1</span>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">2</span>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer flex flex-col gap-1">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">3</span>
+<div class="bg-mustard/10 text-mustard border-l-2 border-mustard px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            季度回顾
+                        </div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">4</span>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer flex flex-col gap-1">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">5</span>
+<div class="bg-primary/10 text-primary border-l-2 border-primary px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            团队会议
+                        </div>
+<div class="bg-sky/10 text-sky border-l-2 border-sky px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            设计评审
+                        </div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">6</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">7</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">8</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">9</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">10</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer flex flex-col gap-1">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">11</span>
+<div class="bg-sky/10 text-sky border-l-2 border-sky px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            更新文档
+                        </div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">12</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">13</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">14</span></div>
+<div class="bg-primary/5 dark:bg-primary/20 p-2 relative ring-1 ring-inset ring-primary transition-colors cursor-pointer flex flex-col gap-1.5 overflow-hidden">
+<span class="text-sm font-bold text-primary dark:text-primary-light">15</span>
+<div class="bg-white dark:bg-[#333] border border-gray-100 dark:border-gray-600 rounded p-1.5 shadow-sm flex items-center gap-1.5 group hover:border-primary transition-colors">
+<div class="w-1 h-3 rounded-full bg-primary shrink-0"></div>
+<span class="text-[10px] font-medium leading-tight truncate dark:text-gray-200">撰写项目提案</span>
+</div>
+<div class="bg-white dark:bg-[#333] border border-gray-100 dark:border-gray-600 rounded p-1.5 shadow-sm flex items-center gap-1.5 group hover:border-sky transition-colors">
+<div class="w-1 h-3 rounded-full bg-sky shrink-0"></div>
+<span class="text-[10px] font-medium leading-tight truncate dark:text-gray-200">联系 Obsidian 团队</span>
+</div>
+<div class="bg-white dark:bg-[#333] border border-gray-100 dark:border-gray-600 rounded p-1.5 shadow-sm flex items-center gap-1.5 group hover:border-mustard transition-colors opacity-75">
+<div class="w-1 h-3 rounded-full bg-mustard shrink-0"></div>
+<span class="text-[10px] font-medium leading-tight truncate line-through dark:text-gray-400">审查 .md 日志</span>
+</div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">16</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">17</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">18</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">19</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer flex flex-col gap-1">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">20</span>
+<div class="bg-primary/10 text-primary border-l-2 border-primary px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            客户反馈
+                        </div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">21</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">22</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">23</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">24</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">25</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer flex flex-col gap-1">
+<span class="text-sm font-bold text-gray-700 dark:text-gray-300">26</span>
+<div class="bg-mustard/10 text-mustard border-l-2 border-mustard px-1.5 py-0.5 rounded-r text-[10px] font-medium truncate">
+                            发票报销
+                        </div>
+</div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">27</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">28</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">29</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">30</span></div>
+<div class="bg-white dark:bg-[#252525] p-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group cursor-pointer"><span class="text-sm font-bold text-gray-700 dark:text-gray-300">31</span></div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

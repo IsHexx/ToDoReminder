@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>快速录入弹窗 (桌面端比例)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b794f",
+                        "background-light": "#ffffff",
+                        "background-dark": "#202020",
+                        "mustard": "#DDA448",
+                        "sky-accent": "#7BC7D9",
+                    },
+                    fontFamily: {
+                        "display": ["Microsoft YaHei", "Segoe UI", "PingFang SC", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "window": "12px", 
+                        "control": "6px",
+                    },
+                    boxShadow: {
+                        'elevation': '0 16px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0,0,0,0.08)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        textarea::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }.mica-window {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+        }
+        .dark .mica-window {
+            background-color: rgba(32, 32, 32, 0.85);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-black min-h-screen font-display text-base antialiased selection:bg-primary/20 selection:text-primary overflow-hidden relative flex items-center justify-center">
+<div class="absolute inset-0 z-0 select-none">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCRyQHPZYj6nxodgoTt0yfECABjbDWKJm_kFZlrfQ9xvhXQuj_P_xv6C0yE0Gr7Y3OwxuNxLDKQJ0IIsHPzY1Tf5IKZQPBGCfkMFaGIDaIaILAjk6L1YjbHWF_lkNkv2hTmvrsWbOglLGPB21keY2wc6vLbK6TdQo6p6Oz6VjCAF5xYx_Wlrcii9Deds5-EYZsvRhpTtunT5PMHGrPktU-BNilJLm4qTJU6c60kZifmqCpUzqSeff1WfL3d4mMryzDKm4_DcTMUyeNq'); transform: scale(1.05); filter: blur(8px);"></div>
+<div class="absolute inset-0 bg-black/10 z-10"></div>
+</div>
+<div class="relative z-20 w-[640px] mica-window rounded-window shadow-elevation flex flex-col transition-all duration-300 border border-white/40 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+<div class="flex items-center justify-between px-5 pt-4 pb-2 select-none cursor-default">
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center w-6 h-6 bg-primary/10 rounded-md">
+<span class="material-symbols-outlined text-primary text-[16px]">add_task</span>
+</div>
+<h3 class="text-gray-800 dark:text-gray-100 text-sm font-semibold tracking-wide">快速任务录入</h3>
+<div class="flex items-center gap-1 ml-2 text-[10px] text-gray-500 font-medium bg-gray-100/50 dark:bg-white/5 px-2 py-0.5 rounded-full border border-gray-200/50 dark:border-white/5">
+<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                    已同步
+                </div>
+</div>
+<button class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-control p-1.5 hover:bg-black/5 dark:hover:bg-white/10">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="px-6 py-3">
+<textarea autofocus="" class="w-full bg-transparent border-none p-0 text-xl font-medium text-gray-800 dark:text-white placeholder:text-gray-400/80 focus:ring-0 resize-none leading-relaxed min-h-[90px]" placeholder="输入任务标题...">完成季度报告审查</textarea>
+<div class="flex gap-2 flex-wrap mt-2 mb-4">
+<div class="group flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-control bg-mustard/10 pl-2 pr-3 border border-mustard/20 cursor-pointer hover:bg-mustard/20 transition-colors">
+<span class="text-mustard material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform">flag</span>
+<span class="text-mustard text-xs font-bold">高</span>
+</div>
+<div class="group flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-control bg-sky-accent/10 pl-2 pr-3 border border-sky-accent/20 cursor-pointer hover:bg-sky-accent/20 transition-colors">
+<span class="text-[#5aa8ba] material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform">tag</span>
+<span class="text-[#5aa8ba] text-xs font-bold">工作</span>
+</div>
+<div class="group flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-control bg-primary/10 pl-2 pr-3 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors">
+<span class="text-primary material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform">repeat</span>
+<span class="text-primary text-xs font-bold">每周</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-4 flex items-center justify-between bg-gray-50/60 dark:bg-black/20 rounded-b-window border-t border-gray-200/50 dark:border-white/5">
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 flex items-center justify-center rounded-control text-gray-500 hover:text-mustard hover:bg-mustard/10 transition-all active:scale-95" title="优先级">
+<span class="material-symbols-outlined text-[20px] fill-current">flag</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-control text-gray-500 hover:text-sky-accent hover:bg-sky-accent/10 transition-all active:scale-95" title="标签">
+<span class="material-symbols-outlined text-[20px]">tag</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-control text-gray-500 hover:text-primary hover:bg-primary/10 transition-all active:scale-95" title="时间">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-control text-gray-500 hover:text-primary hover:bg-primary/10 transition-all active:scale-95" title="重复周期">
+<span class="material-symbols-outlined text-[20px]">repeat</span>
+</button>
+<div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+<button class="w-9 h-9 flex items-center justify-center rounded-control text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-white/10 transition-all active:scale-95" title="语音输入">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2 rounded-control text-gray-600 dark:text-gray-300 font-medium text-sm hover:bg-gray-200/80 dark:hover:bg-white/10 transition-colors">
+                    取消
+                </button>
+<button class="px-5 py-2 rounded-control text-white font-medium text-sm bg-primary shadow-sm hover:bg-[#156340] active:scale-[0.98] transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    添加
+                </button>
+</div>
+</div>
+</div>
+
+</body></html>

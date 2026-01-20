@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>同步设置页面</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&amp;family=Manrope:wght@200..800&amp;family=Fira+Code:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b794f",
+                        "primary-dark": "#125d3b",
+                        "background-light": "#f5f7f6",
+                        "background-dark": "#121212",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e1e1e",
+                        "text-main": "#121715",
+                        "text-sub": "#5a756a",
+                        "border-light": "#e0e6e4",
+                        "border-dark": "#333333",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "mono": ["Fira Code", "monospace"],
+                    },
+                    boxShadow: {
+                        "card": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-body text-text-main dark:text-white transition-colors duration-200 antialiased selection:bg-primary/20 flex h-screen overflow-hidden">
+<aside class="w-64 flex-shrink-0 flex flex-col border-r border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark z-20">
+<div class="h-16 flex items-center px-6 border-b border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-primary mr-2">check_circle</span>
+<span class="font-display font-bold text-lg tracking-tight">TaskSync</span>
+</div>
+<nav class="flex-1 overflow-y-auto p-3 space-y-1">
+<div class="px-3 py-2 text-xs font-bold text-text-sub uppercase tracking-wider">设置</div>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-text-main dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                账户
+            </a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+                同步与应用
+            </a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-text-main dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">palette</span>
+                外观
+            </a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-text-main dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">info</span>
+                关于
+            </a>
+</nav>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark">
+<header class="h-16 flex items-center justify-between px-8 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark">
+<h1 class="text-xl font-display font-bold text-text-main dark:text-white">同步与应用设置</h1>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-sm font-medium text-text-sub hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors">
+                    重置默认
+                </button>
+<button class="px-5 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-dark rounded-md shadow-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">save</span>
+                    保存设置
+                </button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-8">
+<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-7 space-y-8">
+<section class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-card border border-border-light dark:border-border-dark p-6">
+<div class="flex items-center gap-2 mb-4 pb-2 border-b border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-primary">folder_data</span>
+<h2 class="text-base font-bold text-text-main dark:text-white">Obsidian 库路径</h2>
+</div>
+<div class="space-y-4">
+<label class="block">
+<span class="text-sm font-medium text-text-main dark:text-gray-200">本地文件夹路径</span>
+<span class="text-xs text-text-sub ml-2">选择您的 Obsidian 仓库根目录</span>
+</label>
+<div class="flex gap-2">
+<div class="relative flex-1 group">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">folder_open</span>
+</div>
+<input class="block w-full rounded-md border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark py-2 pl-10 pr-3 text-sm font-mono text-text-main dark:text-gray-200 focus:border-primary focus:ring-primary shadow-sm cursor-not-allowed" readonly="" type="text" value="C:\Users\Alex\Documents\Obsidian\PersonalVault"/>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-md hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium text-text-main dark:text-gray-200 transition-colors shadow-sm">
+<span>浏览...</span>
+</button>
+</div>
+</div>
+</section>
+<section class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-card border border-border-light dark:border-border-dark p-6">
+<div class="flex items-center gap-2 mb-4 pb-2 border-b border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-primary">settings_motion_mode</span>
+<h2 class="text-base font-bold text-text-main dark:text-white">同步设置</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex items-center justify-between p-3 rounded-md border border-border-light dark:border-border-dark bg-background-light/30 dark:bg-background-dark/30">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main dark:text-white">自动同步</span>
+<span class="text-xs text-text-sub mt-0.5">每日自动推送变更</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-3 rounded-md border border-border-light dark:border-border-dark bg-background-light/30 dark:bg-background-dark/30">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main dark:text-white">同步时间</span>
+<span class="text-xs text-text-sub mt-0.5">后台执行时间</span>
+</div>
+<div class="relative">
+<input class="block rounded-md border-border-light dark:border-border-dark bg-white dark:bg-surface-dark py-1 px-2 text-sm font-mono text-text-main dark:text-white focus:border-primary focus:ring-primary shadow-sm" type="time" value="08:00"/>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-card border border-border-light dark:border-border-dark p-6">
+<div class="flex items-center gap-2 mb-4 pb-2 border-b border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-primary">desktop_windows</span>
+<h2 class="text-base font-bold text-text-main dark:text-white">Windows 设置</h2>
+</div>
+<div class="space-y-6">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="text-sm font-medium text-text-main dark:text-white">最小化到托盘</span>
+</div>
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="text-sm font-medium text-text-main dark:text-white">开机自启</span>
+</div>
+</div>
+<div class="pt-4 border-t border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between mb-2">
+<label class="text-sm font-medium text-text-main dark:text-white">全局快捷键</label>
+<button class="text-xs text-primary hover:underline">恢复默认</button>
+</div>
+<div class="flex gap-2">
+<div class="flex-1 flex items-center gap-2 p-2 rounded-md border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark shadow-inner">
+<span class="material-symbols-outlined text-gray-400 text-lg">keyboard</span>
+<div class="flex gap-1">
+<kbd class="px-2 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-600 rounded text-xs font-semibold text-gray-500 dark:text-gray-300 shadow-sm">Ctrl</kbd>
+<kbd class="px-2 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-600 rounded text-xs font-semibold text-gray-500 dark:text-gray-300 shadow-sm">Shift</kbd>
+<kbd class="px-2 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-600 rounded text-xs font-semibold text-gray-500 dark:text-gray-300 shadow-sm">O</kbd>
+</div>
+</div>
+<button class="px-3 py-2 bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-md text-xs font-bold uppercase tracking-wide hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                        编辑
+                                    </button>
+</div>
+<p class="text-xs text-text-sub mt-2">用于在系统任何位置快速唤起快速记录窗口。</p>
+</div>
+</div>
+</section>
+</div>
+<div class="lg:col-span-5">
+<section class="sticky top-0 space-y-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-card border border-border-light dark:border-border-dark p-6">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">markdown</span>
+<h2 class="text-base font-bold text-text-main dark:text-white">Markdown 预览</h2>
+</div>
+<span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold rounded uppercase tracking-wider">Live</span>
+</div>
+<div class="bg-[#282c34] rounded-md p-4 mb-4 border border-gray-800 shadow-inner overflow-hidden">
+<div class="flex gap-1.5 mb-4 opacity-50">
+<div class="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
+</div>
+<div class="font-mono text-sm leading-relaxed">
+<div class="text-gray-500 mb-1"># 2023-11-24.md</div>
+<div class="pl-0">
+<span class="text-purple-400">## 任务</span>
+</div>
+<div class="mt-1">
+<span class="text-primary">- [ ]</span> <span class="text-gray-200">审查 Q3 报告</span> <span class="text-blue-400">#工作</span> <span class="text-orange-400">@高</span>
+</div>
+<div class="mt-1">
+<span class="text-primary">- [x]</span> <span class="text-gray-500 line-through">联系架构师</span> <span class="text-blue-400">#项目</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3 text-sm text-text-sub dark:text-gray-400 bg-background-light dark:bg-background-dark p-3 rounded-md border border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-lg mt-0.5 text-primary">info</span>
+<p class="text-xs leading-relaxed">
+                                    这是您的任务在 Obsidian 中的渲染效果预览。任务将自动追加到对应的日期笔记中，完全兼容 Obsidian Tasks 插件语法。
+                                </p>
+</div>
+</div>
+<div class="bg-primary/5 rounded-lg border border-primary/10 p-4 flex items-center gap-4">
+<div class="p-2 bg-primary/10 rounded-full text-primary">
+<span class="material-symbols-outlined">sync_saved_locally</span>
+</div>
+<div>
+<h3 class="text-sm font-bold text-primary">同步状态: 正常</h3>
+<p class="text-xs text-text-sub mt-0.5">上次同步: 今天 08:00 AM</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>
