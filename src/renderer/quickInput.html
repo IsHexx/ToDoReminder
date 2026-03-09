@@ -419,6 +419,12 @@
         };
 
         const $ = (sel) => document.querySelector(sel);
+        const formatLocalDate = (date = new Date()) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
 
         // 关闭窗口
         $('#btn-close').onclick = () => window.electronAPI?.closeQuickInput();
@@ -550,7 +556,7 @@
                 priority: taskData.priority,
                 repeat: taskData.repeat,
                 tags: taskData.tags,
-                date: new Date().toISOString().split('T')[0],
+                date: formatLocalDate(),
                 status: '待办',
                 createdAt: new Date().toISOString()
             };

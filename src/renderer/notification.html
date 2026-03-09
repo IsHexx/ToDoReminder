@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务提醒</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            font-family: "Microsoft YaHei UI", "PingFang SC", sans-serif;
+            background: #f3f7f6;
+        }
+
+        body {
+            padding: 0;
+        }
+
+        .toast {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            background: linear-gradient(180deg, #ffffff 0%, #f3f7f6 100%);
+            border: 1px solid rgba(27, 121, 79, 0.12);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #1b794f;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1b794f;
+            box-shadow: 0 0 0 6px rgba(27, 121, 79, 0.12);
+        }
+
+        .close-btn {
+            border: none;
+            background: #eef3f2;
+            color: #57706a;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .close-btn:hover {
+            background: #e3ece9;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .title {
+            font-size: 18px;
+            line-height: 1.35;
+            color: #16211e;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #ecf6f2;
+            color: #1b794f;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .desc {
+            font-size: 12px;
+            color: #61736d;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #1b794f;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #156340;
+        }
+
+        .btn-secondary {
+            background: #eef3f2;
+            color: #30433f;
+        }
+
+        .btn-secondary:hover {
+            background: #e2ebe8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast">
+        <div class="header">
+            <div class="badge">
+                <span class="dot"></span>
+                <span>任务提醒</span>
+            </div>
+            <button class="close-btn" id="btn-close" aria-label="关闭">×</button>
+        </div>
+
+        <div class="content">
+            <div class="title" id="task-title">任务提醒</div>
+            <div class="meta">
+                <span class="pill" id="task-time">现在</span>
+                <span class="pill" id="task-date">今天</span>
+            </div>
+            <div class="desc">提醒到点后会在屏幕右下角弹出，直到你处理或关闭。</div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-secondary" id="btn-snooze">延迟 5 分钟</button>
+            <button class="btn btn-primary" id="btn-complete">标记完成</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTask = null;
+        let autoCloseTimer = null;
+
+        const $ = (selector) => document.querySelector(selector);
+
+        const resetAutoClose = () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+            }
+
+            autoCloseTimer = setTimeout(() => {
+                window.electronAPI?.closeReminderWindow();
+            }, 30000);
+        };
+
+        window.electronAPI?.onShowReminder((task) => {
+            currentTask = task;
+            $('#task-title').textContent = task.title || '任务提醒';
+            $('#task-time').textContent = task.time || '现在';
+            $('#task-date').textContent = task.date || '今天';
+            resetAutoClose();
+        });
+
+        $('#btn-complete').addEventListener('click', () => {
+            if (currentTask?.id) {
+                window.electronAPI?.completeReminderTask(currentTask.id);
+            }
+        });
+
+        $('#btn-snooze').addEventListener('click', () => {
+            if (currentTask?.id) {
+                window.electronAPI?.snoozeReminderTask(currentTask.id, 5);
+            }
+        });
+
+        $('#task-title').addEventListener('click', () => {
+            window.electronAPI?.openReminderMainWindow();
+        });
+
+        $('#btn-close').addEventListener('click', () => {
+            window.electronAPI?.closeReminderWindow();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (autoCloseTimer) {
+                clearTimeout(autoCloseTimer);
+            }
+        });
+    </script>
+</body>
+
+</html>

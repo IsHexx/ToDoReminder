@@ -62,7 +62,7 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-sm font-bold text-text-main dark:text-white">ToDoReminder</span>
-                        <span class="text-xs text-text-sub">v1.0.0</span>
+                        <span id="app-version-sidebar" class="text-xs text-text-sub">v--</span>
                     </div>
                 </div>
 
@@ -455,6 +455,25 @@
                                 <p id="last-sync-time" class="text-xs text-text-sub mt-0.5">尚未同步</p>
                             </div>
                         </div>
+
+                        <section
+                            class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-border-subtle dark:border-gray-800 p-6">
+                            <div
+                                class="flex items-center justify-between gap-4 mb-4 pb-2 border-b border-border-subtle dark:border-gray-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary">new_releases</span>
+                                    <h2 class="text-base font-bold text-text-main dark:text-white">版本与修改说明</h2>
+                                </div>
+                                <span id="app-version-settings"
+                                    class="inline-flex items-center rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-bold">v--</span>
+                            </div>
+                            <div id="release-notes-list" class="space-y-4">
+                                <div
+                                    class="rounded-md border border-border-subtle dark:border-gray-700 bg-background-light/50 dark:bg-background-dark/40 p-4 text-sm text-text-sub">
+                                    正在加载修改说明...
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>

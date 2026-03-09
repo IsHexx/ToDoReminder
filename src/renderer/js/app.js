@@ -11,10 +11,18 @@
     let currentCalendarDate = new Date();
     let editingTaskId = null;
     let currentFilter = { type: null, value: null }; // 当前筛选条件
+    let appInfo = { version: '', releaseNotes: [] };
 
     // DOM 元素缓存
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => document.querySelectorAll(selector);
+
+    function formatLocalDate(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     // 初始化
     async function init() {
@@ -25,6 +33,7 @@
         renderTasks();
         updateProgress();
         updateObsidianConnectionStatus(); // 更新 Obsidian 连接状态
+        renderAppInfo();
 
         // 监听任务更新
         if (window.electronAPI) {
@@ -49,8 +58,58 @@
         if (window.electronAPI) {
             tasks = await window.electronAPI.getTasks();
             settings = await window.electronAPI.getSettings();
+            appInfo = await window.electronAPI.getAppInfo();
             applySettings();
         }
+    }
+
+    function renderAppInfo() {
+        const version = appInfo.version || '--';
+        const sidebarVersion = $('#app-version-sidebar');
+        const settingsVersion = $('#app-version-settings');
+        const releaseNotesList = $('#release-notes-list');
+
+        if (sidebarVersion) {
+            sidebarVersion.textContent = `v${version}`;
+        }
+
+        if (settingsVersion) {
+            settingsVersion.textContent = `v${version}`;
+        }
+
+        if (!releaseNotesList) {
+            return;
+        }
+
+        const notes = Array.isArray(appInfo.releaseNotes) ? appInfo.releaseNotes : [];
+        if (notes.length === 0) {
+            releaseNotesList.innerHTML = `
+                <div class="rounded-md border border-border-subtle dark:border-gray-700 bg-background-light/50 dark:bg-background-dark/40 p-4 text-sm text-text-sub">
+                    暂无修改说明
+                </div>
+            `;
+            return;
+        }
+
+        releaseNotesList.innerHTML = notes.map(note => `
+            <article class="rounded-xl border border-border-subtle dark:border-gray-700 bg-background-light/50 dark:bg-background-dark/40 p-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-text-main dark:text-white">v${escapeHtml(note.version || '--')}</span>
+                        <span class="text-xs text-text-sub">${escapeHtml(note.date || '')}</span>
+                    </div>
+                    <span class="inline-flex items-center rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-bold text-secondary">更新说明</span>
+                </div>
+                <div class="space-y-2">
+                    ${(note.items || []).map(item => `
+                        <div class="flex items-start gap-2 text-sm text-text-main dark:text-gray-200">
+                            <span class="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+                            <span>${escapeHtml(item)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </article>
+        `).join('');
     }
 
     // 应用设置
@@ -117,7 +176,7 @@
         $('#btn-more')?.addEventListener('click', (e) => showFilterMenu(e));
 
         // 设置默认日期为今天
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatLocalDate();
         $('#input-task-date').value = today;
     }
 
@@ -175,7 +234,7 @@
 
     // 显示日期选择器
     function showDateSelector() {
-        showPickerModal('date', '设置任务日期', $('#input-task-date').value || new Date().toISOString().split('T')[0], (date) => {
+        showPickerModal('date', '设置任务日期', $('#input-task-date').value || formatLocalDate(), (date) => {
             if (date) {
                 $('#input-task-date').value = date;
                 updateTagsPreview();
@@ -351,14 +410,14 @@
         for (let i = 0; i < 7; i++) {
             const date = new Date(today);
             date.setDate(date.getDate() + i);
-            days.push(date.toISOString().split('T')[0]);
+            days.push(formatLocalDate(date));
         }
 
         // 按日期分组任务
         let html = '';
         days.forEach((dateStr, index) => {
             const dayTasks = tasks.filter(t => {
-                const taskDate = t.date || new Date().toISOString().split('T')[0];
+                const taskDate = t.date || formatLocalDate();
                 return taskDate === dateStr && t.status !== '完成';
             });
 
@@ -528,7 +587,7 @@
     function renderTasks() {
         const taskList = $('#task-list');
         const emptyState = $('#empty-state');
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatLocalDate();
 
         // 筛选今日任务
         let filteredTasks = tasks.filter(task => {
@@ -766,7 +825,7 @@
 
     // 更新进度
     function updateProgress() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatLocalDate();
         const todayTasks = tasks.filter(t => (t.date || today) === today);
         const completed = todayTasks.filter(t => t.status === '完成').length;
         const total = todayTasks.length;
@@ -813,7 +872,7 @@
         const lastDay = new Date(year, month + 1, 0);
         const startDayOfWeek = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatLocalDate();
 
         let html = '';
 
@@ -918,8 +977,8 @@
         for (let i = 0; i < 7; i++) {
             const date = new Date(weekStart);
             date.setDate(weekStart.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            const isToday = dateStr === today.toISOString().split('T')[0];
+            const dateStr = formatLocalDate(date);
+            const isToday = dateStr === formatLocalDate(today);
             const dayTasks = tasks.filter(t => t.date === dateStr);
 
             let taskHtml = '';
@@ -962,7 +1021,7 @@
         // 清空表单
         $('#input-task-title').value = '';
         $('#input-task-time').value = '';
-        $('#input-task-date').value = new Date().toISOString().split('T')[0];
+        $('#input-task-date').value = formatLocalDate();
         $('#select-task-priority').value = '中';
         $('#select-task-repeat').value = '';
         $('#input-task-tags').value = '';
@@ -984,7 +1043,7 @@
         // 填充表单数据
         $('#input-task-title').value = task.title || '';
         $('#input-task-time').value = task.time || '';
-        $('#input-task-date').value = task.date || new Date().toISOString().split('T')[0];
+        $('#input-task-date').value = task.date || formatLocalDate();
         $('#select-task-priority').value = task.priority || '中';
         $('#select-task-repeat').value = task.repeat || '';
         $('#input-task-tags').value = task.tags ? task.tags.join(', ') : '';

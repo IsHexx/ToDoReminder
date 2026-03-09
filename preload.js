@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 设置操作
     getSettings: () => ipcRenderer.invoke('get-settings'),
     saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+    getAppInfo: () => ipcRenderer.invoke('get-app-info'),
 
     // 同步操作
     syncObsidian: () => ipcRenderer.invoke('sync-obsidian'),
@@ -19,6 +20,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 快速输入窗口
     closeQuickInput: () => ipcRenderer.send('close-quick-input'),
     quickAddTask: (task) => ipcRenderer.send('quick-add-task', task),
+    completeReminderTask: (taskId) => ipcRenderer.send('reminder-complete-task', taskId),
+    snoozeReminderTask: (taskId, minutes) => ipcRenderer.send('reminder-snooze-task', taskId, minutes),
+    openReminderMainWindow: () => ipcRenderer.send('reminder-open-main-window'),
+    closeReminderWindow: () => ipcRenderer.send('reminder-close'),
 
     // 事件监听
     onTasksUpdated: (callback) => {
@@ -29,5 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onSyncError: (callback) => {
         ipcRenderer.on('sync-error', (event, error) => callback(error));
+    },
+    onShowReminder: (callback) => {
+        ipcRenderer.on('show-reminder', (event, task) => callback(task));
     }
 });
