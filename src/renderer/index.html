@@ -115,13 +115,13 @@
                         <span class="text-xs font-medium text-text-sub">同步状态</span>
                         <span
                             class="material-symbols-outlined text-[16px] text-primary cursor-pointer hover:text-primary-dark"
-                            id="btn-sync-now" title="立即同步">sync</span>
+                            id="btn-sync-now-sidebar" title="立即同步">sync</span>
                     </div>
                     <div class="flex items-center gap-2" id="obsidian-connection-status">
                         <span class="material-symbols-outlined text-[16px] text-gray-400">cloud_off</span>
                         <span class="text-xs text-text-sub">未配置 Obsidian</span>
                     </div>
-                    <div id="last-sync-time" class="text-[10px] text-text-sub mt-1 hidden">
+                    <div id="last-sync-time-sidebar" class="text-[10px] text-text-sub mt-1 hidden">
                         最后同步: --
                     </div>
                 </div>
@@ -382,7 +382,7 @@
                                 </div>
                             </div>
                             <div class="mt-4 flex justify-end">
-                                <button id="btn-sync-now"
+                                <button id="btn-sync-now-settings"
                                     class="px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-md transition-colors flex items-center gap-2">
                                     <span class="material-symbols-outlined text-[18px]">sync</span>
                                     立即同步
@@ -451,8 +451,8 @@
                                 <span class="material-symbols-outlined">sync_saved_locally</span>
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold text-primary">同步状态: 就绪</h3>
-                                <p id="last-sync-time" class="text-xs text-text-sub mt-0.5">尚未同步</p>
+                                <h3 id="sync-status-title" class="text-sm font-bold text-primary">同步状态: 就绪</h3>
+                                <p id="last-sync-time-settings" class="text-xs text-text-sub mt-0.5">尚未同步</p>
                             </div>
                         </div>
 

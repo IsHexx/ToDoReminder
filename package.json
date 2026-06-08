@@ -1,6 +1,6 @@
 {
   "name": "todoreminder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Windows 待办事项软件 - 任务管理与 Obsidian 同步",
   "main": "main.js",
   "scripts": {
@@ -27,7 +27,8 @@
       "src/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -39,6 +40,7 @@
       "language": "2052"
     },
     "directories": {
+      "buildResources": "build",
       "output": "dist"
     }
   }

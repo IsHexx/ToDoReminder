@@ -16,6 +16,16 @@ const settingsFilePath = path.join(dataPath, 'settings.json');
 const REMINDER_GRACE_PERIOD_MS = 90 * 1000;
 const RELEASE_NOTES = [
     {
+        version: '1.0.3',
+        date: '2026-06-08',
+        items: [
+            '修复今日任务计数与列表筛选不一致的问题',
+            '支持在新建任务弹窗中删除误选标签',
+            '修复同步状态区的按钮与时间显示冲突',
+            '更新 Windows 安装包图标，替换默认 Electron 图标'
+        ]
+    },
+    {
         version: '1.0.2',
         date: '2026-03-09',
         items: [
@@ -452,8 +462,12 @@ function syncToObsidian() {
         }
     });
 
+    const syncedAt = new Date().toISOString();
+    settings.lastSyncTime = syncedAt;
+    saveSettings(settings);
+
     if (mainWindow) {
-        mainWindow.webContents.send('sync-complete', new Date().toISOString());
+        mainWindow.webContents.send('sync-complete', syncedAt);
     }
 }
 

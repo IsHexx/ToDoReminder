@@ -159,7 +159,9 @@
         // 设置页面
         $('#btn-browse-folder')?.addEventListener('click', browseFolder);
         $('#btn-save-settings')?.addEventListener('click', saveSettingsHandler);
-        $('#btn-sync-now')?.addEventListener('click', syncNow);
+        ['#btn-sync-now-sidebar', '#btn-sync-now-settings'].forEach(selector => {
+            $(selector)?.addEventListener('click', syncNow);
+        });
         $('#btn-reset-settings')?.addEventListener('click', resetSettings);
 
         // 任务弹窗工具栏按钮
@@ -168,6 +170,7 @@
         $('#btn-time')?.addEventListener('click', showTimeSelector);
         $('#btn-repeat')?.addEventListener('click', showRepeatSelector);
         $('#btn-date')?.addEventListener('click', showDateSelector);
+        $('#selected-tags-preview')?.addEventListener('click', handleSelectedTagsPreviewClick);
 
         // 标签管理页面
         $('#btn-add-tag')?.addEventListener('click', addTag);
@@ -201,9 +204,12 @@
     function showTagInput() {
         showInputModal('添加标签', '输入标签名称:', '', (tag) => {
             if (tag && tag.trim()) {
-                const currentTags = $('#input-task-tags').value;
-                const newTags = currentTags ? `${currentTags}, ${tag.trim()}` : tag.trim();
-                $('#input-task-tags').value = newTags;
+                const tags = getSelectedTaskTags();
+                const trimmedTag = tag.trim();
+                if (!tags.includes(trimmedTag)) {
+                    tags.push(trimmedTag);
+                }
+                setSelectedTaskTags(tags);
                 updateTagsPreview();
             }
         });
@@ -294,6 +300,42 @@
         });
     }
 
+    function getSelectedTaskTags() {
+        const tagsInput = $('#input-task-tags');
+        if (!tagsInput || !tagsInput.value) {
+            return [];
+        }
+
+        return tagsInput.value
+            .split(/[,，]/)
+            .map(tag => tag.trim())
+            .filter(tag => tag);
+    }
+
+    function setSelectedTaskTags(tags) {
+        const tagsInput = $('#input-task-tags');
+        if (!tagsInput) {
+            return;
+        }
+
+        tagsInput.value = tags.join(', ');
+    }
+
+    function removeSelectedTaskTag(tagToRemove) {
+        const nextTags = getSelectedTaskTags().filter(tag => tag !== tagToRemove);
+        setSelectedTaskTags(nextTags);
+        updateTagsPreview();
+    }
+
+    function handleSelectedTagsPreviewClick(e) {
+        const removeBtn = e.target.closest('.btn-remove-selected-tag');
+        if (!removeBtn || !removeBtn.dataset.tag) {
+            return;
+        }
+
+        removeSelectedTaskTag(removeBtn.dataset.tag);
+    }
+
     // 更新标签预览区
     function updateTagsPreview() {
         const preview = $('#selected-tags-preview');
@@ -334,13 +376,16 @@
         }
 
         // 标签
-        const tagsInput = $('#input-task-tags').value;
-        if (tagsInput) {
-            const tags = tagsInput.split(/[,，]/).map(t => t.trim()).filter(t => t);
+        const tags = getSelectedTaskTags();
+        if (tags.length > 0) {
             tags.forEach(tag => {
-                html += `<div class="group flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-md bg-tertiary/10 text-tertiary border-tertiary/20 pl-2 pr-3 border cursor-pointer">
+                const escapedTag = escapeHtml(tag);
+                html += `<div class="group flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-md bg-tertiary/10 text-tertiary border-tertiary/20 pl-2 pr-2 border">
                     <span class="material-symbols-outlined text-[16px]">tag</span>
-                    <span class="text-xs font-bold">${escapeHtml(tag)}</span>
+                    <span class="text-xs font-bold">${escapedTag}</span>
+                    <button type="button" class="btn-remove-selected-tag inline-flex items-center justify-center rounded-sm text-tertiary/70 hover:text-tertiary transition-colors" data-tag="${escapedTag}" aria-label="删除标签 ${escapedTag}">
+                        <span class="material-symbols-outlined text-[14px]">close</span>
+                    </button>
                 </div>`;
             });
         }
@@ -583,35 +628,59 @@
         $('#current-date').textContent = dateStr;
     }
 
-    // 渲染任务列表
-    function renderTasks() {
-        const taskList = $('#task-list');
-        const emptyState = $('#empty-state');
-        const today = formatLocalDate();
+    function hasActiveTaskFilter() {
+        return Boolean(currentFilter.type && currentFilter.value);
+    }
 
-        // 筛选今日任务
-        let filteredTasks = tasks.filter(task => {
+    function getTodayTasks(baseTasks = tasks) {
+        const today = formatLocalDate();
+        return baseTasks.filter(task => {
             const taskDate = task.date || today;
             return taskDate === today;
         });
+    }
 
-        // 应用筛选条件
+    function applyCurrentTaskFilter(baseTasks) {
         if (currentFilter.type === 'tag' && currentFilter.value) {
-            filteredTasks = filteredTasks.filter(task =>
+            return baseTasks.filter(task =>
                 task.tags && task.tags.includes(currentFilter.value)
             );
-        } else if (currentFilter.type === 'priority' && currentFilter.value) {
-            filteredTasks = filteredTasks.filter(task =>
+        }
+
+        if (currentFilter.type === 'priority' && currentFilter.value) {
+            return baseTasks.filter(task =>
                 task.priority === currentFilter.value
             );
-        } else if (currentFilter.type === 'status' && currentFilter.value) {
-            filteredTasks = filteredTasks.filter(task =>
+        }
+
+        if (currentFilter.type === 'status' && currentFilter.value) {
+            return baseTasks.filter(task =>
                 task.status === currentFilter.value
             );
         }
 
+        return baseTasks;
+    }
+
+    function getVisibleTodayTasks() {
+        return applyCurrentTaskFilter(getTodayTasks());
+    }
+
+    // 渲染任务列表
+    function renderTasks() {
+        const taskList = $('#task-list');
+        const emptyState = $('#empty-state');
+        const allTodayTasks = getTodayTasks();
+        let filteredTasks = getVisibleTodayTasks();
+
         if (filteredTasks.length === 0) {
             taskList.innerHTML = '';
+            const emptyStateText = emptyState.querySelector('p');
+            if (emptyStateText) {
+                emptyStateText.textContent = hasActiveTaskFilter() && allTodayTasks.length > 0
+                    ? '当前筛选条件下暂无任务'
+                    : '暂无任务，点击上方按钮添加';
+            }
             emptyState.classList.remove('hidden');
             return;
         }
@@ -825,8 +894,7 @@
 
     // 更新进度
     function updateProgress() {
-        const today = formatLocalDate();
-        const todayTasks = tasks.filter(t => (t.date || today) === today);
+        const todayTasks = getVisibleTodayTasks();
         const completed = todayTasks.filter(t => t.status === '完成').length;
         const total = todayTasks.length;
         const remaining = total - completed;
@@ -1159,6 +1227,7 @@
 
     async function syncNow() {
         if (window.electronAPI) {
+            showSyncStatus('syncing');
             await window.electronAPI.syncObsidian();
         }
     }
@@ -1173,59 +1242,99 @@
 
     function showSyncStatus(type, detail) {
         const connectionStatus = $('#obsidian-connection-status');
-        const lastSyncTime = $('#last-sync-time');
+        const sidebarLastSyncTime = $('#last-sync-time-sidebar');
+        const settingsStatusTitle = $('#sync-status-title');
+        const settingsLastSyncTime = $('#last-sync-time-settings');
 
-        if (!connectionStatus) return;
+        if (!connectionStatus && !settingsStatusTitle) return;
 
         if (type === 'success') {
+            const timestamp = `最后同步: ${new Date(detail).toLocaleString('zh-CN')}`;
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-green-500">cloud_done</span>
                 <span class="text-xs text-green-600 font-medium">已连接至 Obsidian</span>
             `;
-            if (lastSyncTime) {
-                lastSyncTime.classList.remove('hidden');
-                lastSyncTime.textContent = `最后同步: ${new Date(detail).toLocaleString('zh-CN')}`;
+            if (sidebarLastSyncTime) {
+                sidebarLastSyncTime.classList.remove('hidden');
+                sidebarLastSyncTime.textContent = timestamp;
+            }
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 已连接';
+            }
+            if (settingsLastSyncTime) {
+                settingsLastSyncTime.textContent = timestamp;
             }
         } else if (type === 'error') {
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-red-500">cloud_off</span>
                 <span class="text-xs text-red-500">${detail || '同步失败'}</span>
             `;
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 同步失败';
+            }
+            if (settingsLastSyncTime) {
+                settingsLastSyncTime.textContent = detail || '同步失败';
+            }
         } else if (type === 'saved') {
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
                 <span class="text-xs text-primary font-medium">设置已保存</span>
             `;
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 设置已保存';
+            }
         } else if (type === 'syncing') {
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-primary animate-spin">sync</span>
                 <span class="text-xs text-text-sub">正在同步...</span>
             `;
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 正在同步';
+            }
+            if (settingsLastSyncTime) {
+                settingsLastSyncTime.textContent = '正在同步 Obsidian...';
+            }
         }
     }
 
     // 更新 Obsidian 连接状态
     function updateObsidianConnectionStatus() {
         const connectionStatus = $('#obsidian-connection-status');
-        const lastSyncTime = $('#last-sync-time');
+        const sidebarLastSyncTime = $('#last-sync-time-sidebar');
+        const settingsStatusTitle = $('#sync-status-title');
+        const settingsLastSyncTime = $('#last-sync-time-settings');
 
-        if (!connectionStatus) return;
+        if (!connectionStatus && !settingsStatusTitle) return;
 
         if (settings.obsidianPath) {
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-green-500">cloud_done</span>
                 <span class="text-xs text-green-600 font-medium">已连接至 Obsidian</span>
             `;
-            if (lastSyncTime && settings.lastSyncTime) {
-                lastSyncTime.classList.remove('hidden');
-                lastSyncTime.textContent = `最后同步: ${new Date(settings.lastSyncTime).toLocaleString('zh-CN')}`;
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 已连接';
+            }
+            if (sidebarLastSyncTime && settings.lastSyncTime) {
+                sidebarLastSyncTime.classList.remove('hidden');
+                sidebarLastSyncTime.textContent = `最后同步: ${new Date(settings.lastSyncTime).toLocaleString('zh-CN')}`;
+            }
+            if (settingsLastSyncTime) {
+                settingsLastSyncTime.textContent = settings.lastSyncTime
+                    ? `最后同步: ${new Date(settings.lastSyncTime).toLocaleString('zh-CN')}`
+                    : '尚未同步';
             }
         } else {
             connectionStatus.innerHTML = `
                 <span class="material-symbols-outlined text-[16px] text-gray-400">cloud_off</span>
                 <span class="text-xs text-text-sub">未配置 Obsidian</span>
             `;
-            if (lastSyncTime) lastSyncTime.classList.add('hidden');
+            if (sidebarLastSyncTime) sidebarLastSyncTime.classList.add('hidden');
+            if (settingsStatusTitle) {
+                settingsStatusTitle.textContent = '同步状态: 未配置';
+            }
+            if (settingsLastSyncTime) {
+                settingsLastSyncTime.textContent = '请先配置 Obsidian 路径';
+            }
         }
     }
 
@@ -1744,11 +1853,10 @@
         popup.querySelectorAll('.tag-option').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tag = btn.dataset.tag;
-                const currentTags = $('#input-task-tags').value;
-                const tagsArray = currentTags ? currentTags.split(/[,，]/).map(t => t.trim()).filter(t => t) : [];
+                const tagsArray = getSelectedTaskTags();
                 if (!tagsArray.includes(tag)) {
                     tagsArray.push(tag);
-                    $('#input-task-tags').value = tagsArray.join(', ');
+                    setSelectedTaskTags(tagsArray);
                     updateTagsPreview();
                 }
                 popup.remove();
