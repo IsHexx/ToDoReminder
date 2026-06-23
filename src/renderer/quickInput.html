@@ -5,14 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self';">
     <title>快速任务录入</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -21,9 +15,21 @@
         }
 
         body {
-            font-family: 'Noto Sans SC', sans-serif;
+            font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
             background: transparent;
             -webkit-app-region: drag;
+        }
+
+        .material-symbols-outlined {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            overflow: hidden;
+            font-family: "Segoe UI Symbol", "Microsoft YaHei UI", sans-serif;
+            font-weight: 700;
+            line-height: 1;
         }
 
         .container {
@@ -410,6 +416,49 @@
     </div>
 
     <script>
+        const iconFallbacks = {
+            add: '+',
+            add_task: '+',
+            close: '×',
+            flag: '⚑',
+            repeat: '↻',
+            schedule: '◷',
+            tag: '#'
+        };
+
+        function applyIconFallbacks(root = document) {
+            root.querySelectorAll?.('.material-symbols-outlined').forEach(icon => {
+                if (icon.dataset.iconName) {
+                    return;
+                }
+
+                const iconName = icon.textContent.trim();
+                icon.dataset.iconName = iconName;
+                icon.textContent = iconFallbacks[iconName] || iconName.slice(0, 1).toUpperCase();
+                icon.setAttribute('aria-hidden', 'true');
+            });
+        }
+
+        const iconObserver = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType !== Node.ELEMENT_NODE) {
+                        return;
+                    }
+
+                    if (node.classList?.contains('material-symbols-outlined')) {
+                        applyIconFallbacks({ querySelectorAll: () => [node] });
+                        return;
+                    }
+
+                    applyIconFallbacks(node);
+                });
+            });
+        });
+
+        iconObserver.observe(document.body, { childList: true, subtree: true });
+        applyIconFallbacks();
+
         const taskData = {
             title: '',
             priority: '中',

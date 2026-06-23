@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut, nativeImage, dialog, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { shouldRunAutoSync } = require('./src/main/scheduler');
 
 // 保持窗口引用，防止被垃圾回收
 let mainWindow = null;
@@ -394,15 +395,31 @@ function registerGlobalShortcut() {
 }
 
 // 同步到 Obsidian
-function syncToObsidian() {
+function showTrayBalloon(title, content, iconType = 'info') {
+    if (!tray) {
+        return;
+    }
+
+    tray.displayBalloon({
+        iconType,
+        title,
+        content
+    });
+}
+
+function syncToObsidian(options = {}) {
     const settings = loadSettings();
     const tasks = loadTasks();
 
     if (!settings.obsidianPath) {
+        const message = '请先配置 Obsidian 库路径';
         if (mainWindow) {
-            mainWindow.webContents.send('sync-error', '请先配置 Obsidian 库路径');
+            mainWindow.webContents.send('sync-error', message);
         }
-        return;
+        if (options.notify) {
+            showTrayBalloon('定时同步失败', message, 'error');
+        }
+        return { success: false, error: message };
     }
 
     // 按日期分组任务
@@ -464,11 +481,20 @@ function syncToObsidian() {
 
     const syncedAt = new Date().toISOString();
     settings.lastSyncTime = syncedAt;
+    if (options.autoSyncDate) {
+        settings.lastAutoSyncDate = options.autoSyncDate;
+    }
     saveSettings(settings);
 
     if (mainWindow) {
         mainWindow.webContents.send('sync-complete', syncedAt);
     }
+
+    if (options.notify) {
+        showTrayBalloon('定时同步完成', '任务已同步到 Obsidian');
+    }
+
+    return { success: true, time: syncedAt };
 }
 
 function updateTaskListAndNotify(tasks) {
@@ -583,8 +609,9 @@ function startScheduler() {
 
         // 检查是否需要同步
         const settings = loadSettings();
-        if (settings.autoSync && settings.syncTime === currentTime) {
-            syncToObsidian();
+        const today = formatLocalDate(now);
+        if (shouldRunAutoSync(settings, currentTime, today)) {
+            syncToObsidian({ notify: true, autoSyncDate: today });
         }
     };
 
@@ -679,14 +706,23 @@ ipcMain.handle('get-settings', () => {
 });
 
 ipcMain.handle('save-settings', (event, settings) => {
-    saveSettings(settings);
+    const previousSettings = loadSettings();
+    const nextSettings = { ...previousSettings, ...settings };
+
+    if (
+        previousSettings.syncTime !== nextSettings.syncTime ||
+        previousSettings.autoSync !== nextSettings.autoSync
+    ) {
+        delete nextSettings.lastAutoSyncDate;
+    }
+
+    saveSettings(nextSettings);
     registerGlobalShortcut();
-    return settings;
+    return nextSettings;
 });
 
 ipcMain.handle('sync-obsidian', () => {
-    syncToObsidian();
-    return { success: true, time: new Date().toISOString() };
+    return syncToObsidian();
 });
 
 ipcMain.handle('get-app-info', () => {

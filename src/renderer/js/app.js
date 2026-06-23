@@ -2,6 +2,80 @@
 (function () {
     'use strict';
 
+    const iconFallbacks = {
+        add: '+',
+        add_circle: '+',
+        add_task: '+',
+        calendar_month: '▦',
+        calendar_today: '▣',
+        check_circle: '✓',
+        chevron_left: '<',
+        chevron_right: '>',
+        close: '×',
+        cloud_done: '✓',
+        cloud_off: '!',
+        delete: '×',
+        desktop_windows: '▭',
+        edit: '✎',
+        filter_alt_off: '×',
+        flag: '⚑',
+        folder_data: '▰',
+        folder_open: '▱',
+        keyboard: '⌘',
+        label_off: '×',
+        more_horiz: '…',
+        new_releases: '!',
+        pending_actions: '…',
+        radio_button_unchecked: '○',
+        repeat: '↻',
+        save: '✓',
+        schedule: '◷',
+        snooze: '◷',
+        sort: '↕',
+        sync: '↻',
+        sync_saved_locally: '✓',
+        tag: '#',
+        timer: '◷',
+        today: '◉',
+        upcoming: '→'
+    };
+
+    function applyIconFallbacks(root = document) {
+        root.querySelectorAll?.('.material-symbols-outlined').forEach(icon => {
+            if (icon.dataset.iconName) {
+                return;
+            }
+
+            const iconName = icon.textContent.trim();
+            icon.dataset.iconName = iconName;
+            icon.textContent = iconFallbacks[iconName] || iconName.slice(0, 1).toUpperCase();
+            icon.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    function watchIconFallbacks() {
+        applyIconFallbacks();
+
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType !== Node.ELEMENT_NODE) {
+                        return;
+                    }
+
+                    if (node.classList?.contains('material-symbols-outlined')) {
+                        applyIconFallbacks({ querySelectorAll: () => [node] });
+                        return;
+                    }
+
+                    applyIconFallbacks(node);
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     // 状态管理
     let tasks = [];
     let settings = {};
@@ -26,6 +100,7 @@
 
     // 初始化
     async function init() {
+        watchIconFallbacks();
         await loadData();
         loadTags(); // 加载用户标签
         setupEventListeners();
@@ -543,47 +618,59 @@
 
         // 收集所有使用中的标签
         const usedTags = [...new Set(tasks.flatMap(t => t.tags || []))];
+        const optionClass = (type, value) => `filter-option ${currentFilter.type === type && currentFilter.value === value ? 'active' : ''}`;
         const tagOptions = usedTags.map(tag =>
-            `<button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-tertiary/10 hover:text-tertiary transition-colors flex items-center gap-2" data-type="tag" data-value="${tag}">
-                <span class="material-symbols-outlined text-[16px]">tag</span> ${tag}
+            `<button class="${optionClass('tag', tag)}" data-type="tag" data-value="${escapeHtml(tag)}">
+                <span class="filter-icon material-symbols-outlined">tag</span>
+                <span class="filter-label">${escapeHtml(tag)}</span>
             </button>`
         ).join('');
 
         const popup = document.createElement('div');
         popup.id = 'filter-popup';
-        popup.className = 'fixed z-[100] bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-border-subtle dark:border-gray-700 py-2 min-w-[160px] max-h-[400px] overflow-y-auto';
+        popup.className = 'filter-popup fixed z-[100]';
         popup.style.top = `${rect.bottom + 5}px`;
         popup.style.right = `${window.innerWidth - rect.right}px`;
         popup.innerHTML = `
-            <div class="px-3 py-1.5 text-xs font-bold text-text-sub uppercase tracking-wide">按优先级</div>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-2" data-type="priority" data-value="高">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span> 高优先级
-            </button>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-secondary/10 hover:text-secondary transition-colors flex items-center gap-2" data-type="priority" data-value="中">
-                <span class="w-2 h-2 rounded-full bg-secondary"></span> 中优先级
-            </button>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-tertiary/10 hover:text-tertiary transition-colors flex items-center gap-2" data-type="priority" data-value="低">
-                <span class="w-2 h-2 rounded-full bg-tertiary"></span> 低优先级
-            </button>
-            <div class="border-t border-border-subtle dark:border-gray-700 my-1"></div>
-            <div class="px-3 py-1.5 text-xs font-bold text-text-sub uppercase tracking-wide">按状态</div>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2" data-type="status" data-value="待办">
-                <span class="material-symbols-outlined text-[16px]">radio_button_unchecked</span> 待办
-            </button>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2" data-type="status" data-value="完成">
-                <span class="material-symbols-outlined text-[16px]">check_circle</span> 已完成
-            </button>
-            <button class="filter-option w-full px-3 py-2 text-left text-sm hover:bg-secondary/10 hover:text-secondary transition-colors flex items-center gap-2" data-type="status" data-value="延迟">
-                <span class="material-symbols-outlined text-[16px]">pending_actions</span> 已延迟
-            </button>
+            <div class="filter-section">
+                <div class="filter-section-title">按优先级</div>
+                <button class="${optionClass('priority', '高')}" data-type="priority" data-value="高">
+                    <span class="priority-dot priority-dot-high"></span>
+                    <span class="filter-label">高优先级</span>
+                </button>
+                <button class="${optionClass('priority', '中')}" data-type="priority" data-value="中">
+                    <span class="priority-dot priority-dot-medium"></span>
+                    <span class="filter-label">中优先级</span>
+                </button>
+                <button class="${optionClass('priority', '低')}" data-type="priority" data-value="低">
+                    <span class="priority-dot priority-dot-low"></span>
+                    <span class="filter-label">低优先级</span>
+                </button>
+            </div>
+            <div class="filter-section">
+                <div class="filter-section-title">按状态</div>
+                <button class="${optionClass('status', '待办')}" data-type="status" data-value="待办">
+                    <span class="filter-icon material-symbols-outlined">radio_button_unchecked</span>
+                    <span class="filter-label">待办</span>
+                </button>
+                <button class="${optionClass('status', '完成')}" data-type="status" data-value="完成">
+                    <span class="filter-icon material-symbols-outlined">check_circle</span>
+                    <span class="filter-label">已完成</span>
+                </button>
+                <button class="${optionClass('status', '延迟')}" data-type="status" data-value="延迟">
+                    <span class="filter-icon material-symbols-outlined">pending_actions</span>
+                    <span class="filter-label">已延迟</span>
+                </button>
+            </div>
             ${usedTags.length > 0 ? `
-                <div class="border-t border-border-subtle dark:border-gray-700 my-1"></div>
-                <div class="px-3 py-1.5 text-xs font-bold text-text-sub uppercase tracking-wide">按标签</div>
-                ${tagOptions}
+                <div class="filter-section">
+                    <div class="filter-section-title">按标签</div>
+                    ${tagOptions}
+                </div>
             ` : ''}
-            <div class="border-t border-border-subtle dark:border-gray-700 my-1"></div>
-            <button id="filter-clear" class="w-full px-3 py-2 text-left text-sm text-text-sub hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined text-[16px]">filter_alt_off</span> 清除筛选
+            <button id="filter-clear" class="filter-clear">
+                <span class="filter-icon material-symbols-outlined">filter_alt_off</span>
+                <span class="filter-label">清除筛选</span>
             </button>
         `;
 
@@ -1361,12 +1448,12 @@
         if (userTags.length === 0) {
             // 只显示快速添加卡片
             tagsList.innerHTML = `
-                <div class="tag-card-add flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-border-subtle dark:border-gray-700 hover:border-primary/50 cursor-pointer transition-all hover:bg-primary/5 min-h-[100px]">
-                    <span class="material-symbols-outlined text-2xl text-text-sub mb-2">add_circle</span>
-                    <span class="text-sm text-text-sub font-medium">快速添加</span>
+                <div class="tag-add-card">
+                    <span class="material-symbols-outlined tag-add-icon">add_circle</span>
+                    <span class="tag-add-title">快速添加</span>
                 </div>
             `;
-            tagsList.querySelector('.tag-card-add')?.addEventListener('click', addTag);
+            tagsList.querySelector('.tag-add-card')?.addEventListener('click', addTag);
             emptyState?.classList.add('hidden');
             return;
         }
@@ -1380,25 +1467,25 @@
             const colorName = getColorName(tagColor);
 
             return `
-                <div class="tag-card group relative p-4 rounded-xl border border-border-subtle dark:border-gray-700 bg-white dark:bg-surface-dark hover:shadow-md hover:border-primary/30 transition-all cursor-pointer" data-tag="${escapeHtml(tagName)}">
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${tagColor}20">
-                            <span class="text-xl font-bold" style="color: ${tagColor}">#</span>
+                <div class="tag-card" data-tag="${escapeHtml(tagName)}">
+                    <div class="tag-card-main">
+                        <div class="tag-icon-box" style="background-color: ${tagColor}20">
+                            <span class="tag-hash" style="color: ${tagColor}">#</span>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-text-main dark:text-white truncate">${escapeHtml(tagName)}</span>
-                                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${tagColor}"></div>
+                        <div class="tag-card-copy">
+                            <div class="tag-card-title-row">
+                                <span class="tag-card-title">${escapeHtml(tagName)}</span>
+                                <span class="tag-color-dot" style="background-color: ${tagColor}"></span>
                             </div>
-                            <span class="text-xs text-text-sub uppercase tracking-wide">${colorName}</span>
+                            <span class="tag-card-meta">${colorName}</span>
                         </div>
                     </div>
-                    <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="btn-edit-tag p-1.5 rounded-md hover:bg-primary/10 text-text-sub hover:text-primary transition-colors" data-tag="${escapeHtml(tagName)}">
-                            <span class="material-symbols-outlined text-[16px]">edit</span>
+                    <div class="tag-card-actions">
+                        <button class="btn-edit-tag tag-action-btn" data-tag="${escapeHtml(tagName)}" title="编辑标签">
+                            <span class="material-symbols-outlined">edit</span>
                         </button>
-                        <button class="btn-delete-tag p-1.5 rounded-md hover:bg-red-50 text-text-sub hover:text-red-600 transition-colors" data-tag="${escapeHtml(tagName)}">
-                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        <button class="btn-delete-tag tag-action-btn tag-action-danger" data-tag="${escapeHtml(tagName)}" title="删除标签">
+                            <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>
                 </div>
@@ -1407,16 +1494,16 @@
 
         // 添加快速添加卡片
         const quickAddHtml = `
-            <div class="tag-card-add flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-border-subtle dark:border-gray-700 hover:border-primary/50 cursor-pointer transition-all hover:bg-primary/5 min-h-[100px]">
-                <span class="material-symbols-outlined text-2xl text-text-sub mb-2">add_circle</span>
-                <span class="text-sm text-text-sub font-medium">快速添加</span>
+            <div class="tag-add-card">
+                <span class="material-symbols-outlined tag-add-icon">add_circle</span>
+                <span class="tag-add-title">快速添加</span>
             </div>
         `;
 
         tagsList.innerHTML = tagsHtml + quickAddHtml;
 
         // 绑定快速添加
-        tagsList.querySelector('.tag-card-add')?.addEventListener('click', addTag);
+        tagsList.querySelector('.tag-add-card')?.addEventListener('click', addTag);
 
         // 绑定编辑事件
         tagsList.querySelectorAll('.btn-edit-tag').forEach(btn => {
