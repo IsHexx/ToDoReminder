@@ -114,6 +114,10 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button id="btn-ai-generate" class="ai-generate-trigger" title="用 AI 从一段文字生成待办">
+                                <span aria-hidden="true">✨</span>
+                                <span>AI 生成</span>
+                            </button>
                             <button id="btn-sort"
                                 class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-text-sub transition-colors">
                                 <span class="material-symbols-outlined text-[20px]">sort</span>
@@ -307,6 +311,35 @@
                                         浏览...
                                     </button>
                                 </div>
+                            </div>
+                        </section>
+
+                        <!-- AI 智能生成设置 -->
+                        <section
+                            class="bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-border-subtle dark:border-gray-800 p-6">
+                            <div
+                                class="flex items-center gap-2 mb-4 pb-2 border-b border-border-subtle dark:border-gray-800">
+                                <span class="text-primary" aria-hidden="true">✨</span>
+                                <h2 class="text-base font-bold text-text-main dark:text-white">AI 智能生成</h2>
+                            </div>
+                            <p class="text-xs text-text-sub mb-4">兼容 DeepSeek、Kimi、OpenAI 等 OpenAI 格式接口。密钥仅用于主进程请求，不会暴露给页面脚本。</p>
+                            <div class="space-y-4">
+                                <label class="block">
+                                    <span class="text-sm font-medium text-text-main dark:text-gray-200">Base URL</span>
+                                    <input id="input-ai-base-url" type="url" autocomplete="url"
+                                        class="ai-settings-input mt-1" placeholder="https://api.deepseek.com">
+                                </label>
+                                <label class="block">
+                                    <span class="text-sm font-medium text-text-main dark:text-gray-200">API Key</span>
+                                    <input id="input-ai-api-key" type="password" autocomplete="new-password"
+                                        class="ai-settings-input mt-1" placeholder="请输入 API Key">
+                                    <span id="ai-api-key-hint" class="block text-xs text-text-sub mt-1"></span>
+                                </label>
+                                <label class="block">
+                                    <span class="text-sm font-medium text-text-main dark:text-gray-200">模型名</span>
+                                    <input id="input-ai-model" type="text" autocomplete="off"
+                                        class="ai-settings-input mt-1" placeholder="deepseek-chat">
+                                </label>
                             </div>
                         </section>
 

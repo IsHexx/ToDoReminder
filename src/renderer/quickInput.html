@@ -18,18 +18,30 @@
             font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
             background: transparent;
             -webkit-app-region: drag;
+            overflow: hidden;
+        }
+
+        @font-face {
+            font-family: 'Material Symbols Outlined';
+            font-style: normal;
+            font-weight: 100 700;
+            src: url('./assets/fonts/material-symbols-outlined.woff2') format('woff2');
         }
 
         .material-symbols-outlined {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1em;
-            height: 1em;
-            overflow: hidden;
-            font-family: "Segoe UI Symbol", "Microsoft YaHei UI", sans-serif;
-            font-weight: 700;
+            font-family: 'Material Symbols Outlined', 'Segoe UI Symbol', sans-serif;
+            font-weight: normal;
+            font-style: normal;
             line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -135,6 +147,86 @@
 
         .input-title::placeholder {
             color: #999;
+        }
+
+        .ai-hint {
+            margin-top: 2px;
+            color: #668577;
+            font-size: 11px;
+        }
+
+        .ai-preview {
+            display: none;
+            margin-top: 12px;
+            padding: 10px;
+            border: 1px solid rgba(27, 121, 79, 0.16);
+            border-radius: 8px;
+            background: rgba(27, 121, 79, 0.035);
+        }
+
+        .ai-preview.show {
+            display: block;
+        }
+
+        .ai-status {
+            color: #668577;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .ai-status.error {
+            color: #b91c1c;
+        }
+
+        .ai-preview-list {
+            display: grid;
+            gap: 8px;
+            max-height: 176px;
+            margin-top: 8px;
+            overflow-y: auto;
+        }
+
+        .ai-preview-item {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) 100px 68px 56px;
+            gap: 6px;
+            align-items: center;
+            padding: 7px;
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .ai-preview-item input[type="checkbox"] {
+            accent-color: #1b794f;
+        }
+
+        .ai-preview-field {
+            min-width: 0;
+            padding: 5px 6px;
+            border: 1px solid #e2e8e5;
+            border-radius: 4px;
+            color: #333;
+            font: inherit;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .ai-preview-field:focus {
+            border-color: #1b794f;
+            box-shadow: 0 0 0 2px rgba(27, 121, 79, 0.12);
+        }
+
+        .ai-preview-meta {
+            grid-column: 2 / -1;
+            color: #668577;
+            font-size: 10px;
+        }
+
+        .ai-import-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 9px;
         }
 
         .tags-row {
@@ -290,6 +382,31 @@
             background: #156340;
         }
 
+        .btn-ai {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border: 1px solid rgba(27, 121, 79, 0.22);
+            background: rgba(27, 121, 79, 0.08);
+            color: #1b794f;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .btn-ai:hover:not(:disabled) {
+            background: rgba(27, 121, 79, 0.14);
+        }
+
+        .btn-ai:disabled,
+        .btn-submit:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
         .btn-submit .material-symbols-outlined {
             font-size: 18px;
         }
@@ -357,10 +474,10 @@
                 <div class="icon-box">
                     <span class="material-symbols-outlined">add_task</span>
                 </div>
-                <span class="title">快速任务录入</span>
+                <span class="title">快速 AI 录入</span>
                 <div class="status-badge">
                     <span class="status-dot"></span>
-                    已连接
+                    Ctrl+Shift+I
                 </div>
             </div>
             <button class="btn-close" id="btn-close">
@@ -369,7 +486,15 @@
         </div>
 
         <div class="content">
-            <textarea id="input-title" class="input-title" placeholder="输入任务标题..." rows="2"></textarea>
+            <textarea id="input-title" class="input-title" placeholder="描述待办安排，或输入单个任务..." rows="2"></textarea>
+            <p class="ai-hint">点击“AI 生成”或按 Ctrl+Enter 解析为待办；直接按 Enter 可手动添加单个任务。</p>
+            <div id="ai-preview" class="ai-preview" aria-live="polite">
+                <p id="ai-status" class="ai-status"></p>
+                <div id="ai-preview-list" class="ai-preview-list"></div>
+                <div id="ai-import-row" class="ai-import-row">
+                    <button class="btn-submit" id="btn-ai-import" disabled>导入 0 项</button>
+                </div>
+            </div>
             <div class="tags-row" id="tags-row">
                 <!-- 动态添加的标签 -->
             </div>
@@ -407,6 +532,10 @@
             </div>
             <div class="actions">
                 <button class="btn-cancel" id="btn-cancel">取消</button>
+                <button class="btn-ai" id="btn-ai-generate" title="用 AI 解析待办描述">
+                    <span aria-hidden="true">✨</span>
+                    AI 生成
+                </button>
                 <button class="btn-submit" id="btn-submit">
                     <span class="material-symbols-outlined">add</span>
                     添加
@@ -416,49 +545,6 @@
     </div>
 
     <script>
-        const iconFallbacks = {
-            add: '+',
-            add_task: '+',
-            close: '×',
-            flag: '⚑',
-            repeat: '↻',
-            schedule: '◷',
-            tag: '#'
-        };
-
-        function applyIconFallbacks(root = document) {
-            root.querySelectorAll?.('.material-symbols-outlined').forEach(icon => {
-                if (icon.dataset.iconName) {
-                    return;
-                }
-
-                const iconName = icon.textContent.trim();
-                icon.dataset.iconName = iconName;
-                icon.textContent = iconFallbacks[iconName] || iconName.slice(0, 1).toUpperCase();
-                icon.setAttribute('aria-hidden', 'true');
-            });
-        }
-
-        const iconObserver = new MutationObserver(mutations => {
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType !== Node.ELEMENT_NODE) {
-                        return;
-                    }
-
-                    if (node.classList?.contains('material-symbols-outlined')) {
-                        applyIconFallbacks({ querySelectorAll: () => [node] });
-                        return;
-                    }
-
-                    applyIconFallbacks(node);
-                });
-            });
-        });
-
-        iconObserver.observe(document.body, { childList: true, subtree: true });
-        applyIconFallbacks();
-
         const taskData = {
             title: '',
             priority: '中',
@@ -466,6 +552,8 @@
             repeat: null,
             time: null
         };
+        let aiPreviewTasks = [];
+        let isAiParsing = false;
 
         const $ = (sel) => document.querySelector(sel);
         const formatLocalDate = (date = new Date()) => {
@@ -476,16 +564,30 @@
         };
 
         // 关闭窗口
-        $('#btn-close').onclick = () => window.electronAPI?.closeQuickInput();
-        $('#btn-cancel').onclick = () => window.electronAPI?.closeQuickInput();
+        $('#btn-close').onclick = () => {
+            resetQuickInput();
+            window.electronAPI?.closeQuickInput();
+        };
+        $('#btn-cancel').onclick = () => {
+            resetQuickInput();
+            window.electronAPI?.closeQuickInput();
+        };
 
         // 输入标题
         $('#input-title').addEventListener('input', (e) => {
             taskData.title = e.target.value;
+            if (aiPreviewTasks.length > 0) {
+                resetAiPreview();
+            }
         });
 
         // 回车提交
         $('#input-title').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                parseDescriptionWithAi();
+                return;
+            }
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 submitTask();
@@ -590,6 +692,153 @@
             row.innerHTML = html;
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function resetAiPreview() {
+            aiPreviewTasks = [];
+            $('#ai-preview').classList.remove('show');
+            $('#ai-preview').querySelector('#ai-status').textContent = '';
+            $('#ai-preview').querySelector('#ai-status').classList.remove('error');
+            $('#ai-preview-list').innerHTML = '';
+            $('#ai-import-row').style.display = 'none';
+            $('#btn-ai-import').disabled = true;
+            $('#btn-ai-import').textContent = '导入 0 项';
+        }
+
+        function setAiStatus(message, isError = false) {
+            const preview = $('#ai-preview');
+            const status = $('#ai-status');
+            preview.classList.add('show');
+            status.textContent = message;
+            status.classList.toggle('error', isError);
+        }
+
+        function updateAiImportButton() {
+            const selectedCount = aiPreviewTasks.filter(task => task.selected).length;
+            $('#btn-ai-import').disabled = selectedCount === 0;
+            $('#btn-ai-import').textContent = `导入 ${selectedCount} 项`;
+            $('#ai-import-row').style.display = aiPreviewTasks.length ? 'flex' : 'none';
+        }
+
+        function renderAiPreview() {
+            const list = $('#ai-preview-list');
+            list.innerHTML = aiPreviewTasks.map((task, index) => `
+                <div class="ai-preview-item">
+                    <input class="ai-preview-select" type="checkbox" data-index="${index}" ${task.selected ? 'checked' : ''} aria-label="选择任务 ${index + 1}">
+                    <input class="ai-preview-field" type="text" data-field="title" data-index="${index}" value="${escapeHtml(task.title)}" aria-label="任务标题">
+                    <input class="ai-preview-field" type="date" data-field="date" data-index="${index}" value="${escapeHtml(task.date || '')}" aria-label="任务日期">
+                    <input class="ai-preview-field" type="time" data-field="time" data-index="${index}" value="${escapeHtml(task.time || '')}" aria-label="任务时间">
+                    <select class="ai-preview-field" data-field="priority" data-index="${index}" aria-label="任务优先级">
+                        ${['高', '中', '低'].map(priority => `<option value="${priority}" ${task.priority === priority ? 'selected' : ''}>${priority}</option>`).join('')}
+                    </select>
+                    <div class="ai-preview-meta">${task.repeat || '不重复'} · ${task.tags?.length ? task.tags.map(tag => `#${escapeHtml(tag)}`).join(' ') : '无标签'}</div>
+                </div>
+            `).join('');
+            updateAiImportButton();
+        }
+
+        async function parseDescriptionWithAi() {
+            const description = taskData.title.trim();
+            if (!description) {
+                $('#input-title').focus();
+                setAiStatus('请先输入待办描述。', true);
+                return;
+            }
+            if (!window.electronAPI?.aiParseTasks) {
+                setAiStatus('AI 生成功能只能在桌面应用中使用。', true);
+                return;
+            }
+            if (isAiParsing) return;
+
+            isAiParsing = true;
+            $('#btn-ai-generate').disabled = true;
+            $('#btn-submit').disabled = true;
+            $('#btn-ai-generate').textContent = '正在解析…';
+            $('#ai-preview-list').innerHTML = '';
+            $('#ai-import-row').style.display = 'none';
+            setAiStatus('正在解析待办描述，请稍候…');
+
+            try {
+                const result = await window.electronAPI.aiParseTasks(description);
+                if (result?.error) {
+                    throw new Error(result.error);
+                }
+
+                aiPreviewTasks = (result?.tasks || []).map(task => ({ ...task, selected: true }));
+                if (aiPreviewTasks.length === 0) {
+                    setAiStatus('没有解析到明确的待办事项，请补充描述后重试。', true);
+                    return;
+                }
+
+                setAiStatus(`已解析 ${aiPreviewTasks.length} 项。确认后可直接导入，也可以先修改标题、日期、时间和优先级。`);
+                renderAiPreview();
+            } catch (error) {
+                aiPreviewTasks = [];
+                setAiStatus(error.message || 'AI 解析失败，请稍后重试。', true);
+                updateAiImportButton();
+            } finally {
+                isAiParsing = false;
+                $('#btn-ai-generate').disabled = false;
+                $('#btn-submit').disabled = false;
+                $('#btn-ai-generate').innerHTML = '<span aria-hidden="true">✨</span> AI 生成';
+            }
+        }
+
+        async function importAiTasks() {
+            const selectedTasks = aiPreviewTasks
+                .filter(task => task.selected && task.title?.trim())
+                .map(({ selected, ...task }) => ({
+                    ...task,
+                    id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    title: task.title.trim(),
+                    date: task.date || null,
+                    time: task.time || null,
+                    priority: task.priority || '中',
+                    tags: Array.isArray(task.tags) ? task.tags : [],
+                    repeat: task.repeat || null,
+                    status: '待办',
+                    createdAt: new Date().toISOString()
+                }));
+
+            if (selectedTasks.length === 0) {
+                setAiStatus('请至少选择一项包含标题的待办。', true);
+                return;
+            }
+            if (!window.electronAPI?.saveTasksBatch) {
+                setAiStatus('批量导入功能只能在桌面应用中使用。', true);
+                return;
+            }
+
+            $('#btn-ai-import').disabled = true;
+            $('#btn-ai-import').textContent = '正在导入…';
+            try {
+                await window.electronAPI.saveTasksBatch(selectedTasks);
+                resetQuickInput();
+                window.electronAPI.closeQuickInput();
+            } catch (error) {
+                setAiStatus(error.message || '导入失败，请稍后重试。', true);
+                updateAiImportButton();
+            }
+        }
+
+        function resetQuickInput() {
+            taskData.title = '';
+            taskData.priority = '中';
+            taskData.tags = [];
+            taskData.repeat = null;
+            taskData.time = null;
+            $('#input-title').value = '';
+            renderTags();
+            resetAiPreview();
+        }
+
         // 提交任务
         function submitTask() {
             const title = taskData.title.trim();
@@ -611,14 +860,35 @@
             };
 
             if (window.electronAPI) {
+                resetQuickInput();
                 window.electronAPI.quickAddTask(task);
             }
         }
 
         $('#btn-submit').onclick = submitTask;
+        $('#btn-ai-generate').onclick = parseDescriptionWithAi;
+        $('#btn-ai-import').onclick = importAiTasks;
+        $('#ai-preview-list').addEventListener('change', (event) => {
+            const index = Number(event.target.dataset.index);
+            if (!Number.isInteger(index) || !aiPreviewTasks[index]) return;
+
+            if (event.target.classList.contains('ai-preview-select')) {
+                aiPreviewTasks[index].selected = event.target.checked;
+            } else if (event.target.dataset.field) {
+                aiPreviewTasks[index][event.target.dataset.field] = event.target.value || null;
+            }
+            updateAiImportButton();
+        });
+        $('#ai-preview-list').addEventListener('input', (event) => {
+            const index = Number(event.target.dataset.index);
+            if (event.target.dataset.field === 'title' && aiPreviewTasks[index]) {
+                aiPreviewTasks[index].title = event.target.value;
+            }
+        });
 
         // 初始化
         renderTags();
+        resetAiPreview();
         $('#input-title').focus();
     </script>
 </body>

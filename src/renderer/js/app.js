@@ -2,80 +2,7 @@
 (function () {
     'use strict';
 
-    const iconFallbacks = {
-        add: '+',
-        add_circle: '+',
-        add_task: '+',
-        calendar_month: '▦',
-        calendar_today: '▣',
-        check_circle: '✓',
-        chevron_left: '<',
-        chevron_right: '>',
-        close: '×',
-        cloud_done: '✓',
-        cloud_off: '!',
-        delete: '×',
-        desktop_windows: '▭',
-        edit: '✎',
-        filter_alt_off: '×',
-        flag: '⚑',
-        folder_data: '▰',
-        folder_open: '▱',
-        keyboard: '⌘',
-        label_off: '×',
-        more_horiz: '…',
-        new_releases: '!',
-        pending_actions: '…',
-        radio_button_unchecked: '○',
-        repeat: '↻',
-        save: '✓',
-        schedule: '◷',
-        snooze: '◷',
-        sort: '↕',
-        sync: '↻',
-        sync_saved_locally: '✓',
-        tag: '#',
-        timer: '◷',
-        today: '◉',
-        upcoming: '→'
-    };
-
-    function applyIconFallbacks(root = document) {
-        root.querySelectorAll?.('.material-symbols-outlined').forEach(icon => {
-            if (icon.dataset.iconName) {
-                return;
-            }
-
-            const iconName = icon.textContent.trim();
-            icon.dataset.iconName = iconName;
-            icon.textContent = iconFallbacks[iconName] || iconName.slice(0, 1).toUpperCase();
-            icon.setAttribute('aria-hidden', 'true');
-        });
-    }
-
-    function watchIconFallbacks() {
-        applyIconFallbacks();
-
-        const observer = new MutationObserver(mutations => {
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType !== Node.ELEMENT_NODE) {
-                        return;
-                    }
-
-                    if (node.classList?.contains('material-symbols-outlined')) {
-                        applyIconFallbacks({ querySelectorAll: () => [node] });
-                        return;
-                    }
-
-                    applyIconFallbacks(node);
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
-
+    // 状态管理
     // 状态管理
     let tasks = [];
     let settings = {};
@@ -86,6 +13,7 @@
     let editingTaskId = null;
     let currentFilter = { type: null, value: null }; // 当前筛选条件
     let appInfo = { version: '', releaseNotes: [] };
+    let aiPreviewTasks = [];
 
     // DOM 元素缓存
     const $ = (selector) => document.querySelector(selector);
@@ -100,7 +28,6 @@
 
     // 初始化
     async function init() {
-        watchIconFallbacks();
         await loadData();
         loadTags(); // 加载用户标签
         setupEventListeners();
@@ -216,6 +143,7 @@
         // 添加任务
         $('#btn-add-task').addEventListener('click', openAddTaskModal);
         $('#btn-calendar-add')?.addEventListener('click', openAddTaskModal);
+        $('#btn-ai-generate')?.addEventListener('click', showAiGenerateModal);
         $('#btn-close-modal').addEventListener('click', closeAddTaskModal);
         $('#btn-cancel-task').addEventListener('click', closeAddTaskModal);
         $('#modal-add-task').addEventListener('click', (e) => {
@@ -375,6 +303,201 @@
         });
     }
 
+    // 从一段文字中解析任务，并在导入前让用户确认和编辑。
+    function showAiGenerateModal() {
+        const existingModal = document.getElementById('ai-generate-modal');
+        if (existingModal) existingModal.remove();
+
+        aiPreviewTasks = [];
+        const apiKeyConfigured = settings.ai?.apiKeyConfigured === true;
+        const modal = document.createElement('div');
+        modal.id = 'ai-generate-modal';
+        modal.className = 'ai-generate-modal';
+        modal.innerHTML = `
+            <div class="ai-modal-card" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
+                <div class="ai-modal-header">
+                    <div>
+                        <h3 id="ai-modal-title" class="text-base font-bold text-text-main dark:text-white">✨ AI 智能生成待办</h3>
+                        <p class="text-xs text-text-sub mt-1">粘贴聊天记录、会议纪要或工作安排，解析后可逐项确认。</p>
+                    </div>
+                    <button type="button" id="ai-close-btn" class="ai-modal-button ai-modal-button-secondary" aria-label="关闭">关闭</button>
+                </div>
+                <div class="ai-modal-body">
+                    <label class="text-sm font-medium text-text-main dark:text-white" for="ai-source-text">待解析文本</label>
+                    <textarea id="ai-source-text" class="ai-source-text mt-2" placeholder="例如：周三前完成项目方案，明天上午 10 点和产品确认需求；每周一整理周报。"></textarea>
+                    <div class="ai-modal-actions">
+                        <button type="button" id="ai-parse-btn" class="ai-modal-button ai-modal-button-primary">开始解析</button>
+                    </div>
+                    <p id="ai-modal-info" class="ai-modal-info"></p>
+                    <div id="ai-modal-error" class="ai-modal-error hidden" role="alert"></div>
+                    <div id="ai-preview-list" class="ai-preview-list"></div>
+                </div>
+                <div class="ai-modal-footer">
+                    <span id="ai-import-summary" class="text-xs text-text-sub">解析后可选择要导入的任务</span>
+                    <div class="flex gap-2">
+                        <button type="button" id="ai-cancel-btn" class="ai-modal-button ai-modal-button-secondary">取消</button>
+                        <button type="button" id="ai-import-btn" class="ai-modal-button ai-modal-button-primary" disabled>导入 0 项</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const sourceInput = modal.querySelector('#ai-source-text');
+        const parseButton = modal.querySelector('#ai-parse-btn');
+        const importButton = modal.querySelector('#ai-import-btn');
+        const info = modal.querySelector('#ai-modal-info');
+        const error = modal.querySelector('#ai-modal-error');
+        const previewList = modal.querySelector('#ai-preview-list');
+        const importSummary = modal.querySelector('#ai-import-summary');
+
+        const closeModal = () => {
+            aiPreviewTasks = [];
+            modal.remove();
+        };
+        const showError = (message) => {
+            error.textContent = message;
+            error.classList.remove('hidden');
+        };
+        const clearError = () => {
+            error.textContent = '';
+            error.classList.add('hidden');
+        };
+        const updateImportButton = () => {
+            const selectedCount = aiPreviewTasks.filter(task => task.selected).length;
+            importButton.disabled = selectedCount === 0;
+            importButton.textContent = `导入 ${selectedCount} 项`;
+            importSummary.textContent = aiPreviewTasks.length
+                ? `已解析 ${aiPreviewTasks.length} 项，已选择 ${selectedCount} 项`
+                : '解析后可选择要导入的任务';
+        };
+        const renderPreview = () => {
+            previewList.innerHTML = aiPreviewTasks.map((task, index) => `
+                <article class="ai-preview-item">
+                    <input type="checkbox" class="ai-preview-select" data-index="${index}" ${task.selected ? 'checked' : ''} aria-label="选择任务 ${index + 1}">
+                    <div class="ai-preview-content">
+                        <input type="text" class="ai-preview-field ai-preview-title" data-field="title" data-index="${index}" value="${escapeHtml(task.title || '')}" aria-label="任务标题">
+                        <input type="date" class="ai-preview-field" data-field="date" data-index="${index}" value="${escapeHtml(task.date || '')}" aria-label="任务日期">
+                        <input type="time" class="ai-preview-field" data-field="time" data-index="${index}" value="${escapeHtml(task.time || '')}" aria-label="任务时间">
+                        <select class="ai-preview-field" data-field="priority" data-index="${index}" aria-label="任务优先级">
+                            ${['高', '中', '低'].map(priority => `<option value="${priority}" ${task.priority === priority ? 'selected' : ''}>${priority}</option>`).join('')}
+                        </select>
+                        <p class="ai-preview-meta">${task.repeat || '不重复'} · ${task.tags?.length ? task.tags.map(tag => `#${escapeHtml(tag)}`).join(' ') : '无标签'}</p>
+                    </div>
+                </article>
+            `).join('');
+            updateImportButton();
+        };
+
+        if (!apiKeyConfigured) {
+            info.textContent = '请先在设置中配置 AI 接口，再回来开始解析。';
+            parseButton.disabled = true;
+        } else {
+            info.textContent = '解析过程会在本机主进程中完成，API Key 不会参与页面请求。';
+        }
+
+        modal.querySelector('#ai-close-btn').addEventListener('click', closeModal);
+        modal.querySelector('#ai-cancel-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) closeModal();
+        });
+
+        parseButton.addEventListener('click', async () => {
+            const sourceText = sourceInput.value.trim();
+            if (!sourceText) {
+                showError('请先粘贴需要解析的文字。');
+                sourceInput.focus();
+                return;
+            }
+            if (!window.electronAPI?.aiParseTasks) {
+                showError('AI 生成功能只能在桌面应用中使用。');
+                return;
+            }
+
+            clearError();
+            parseButton.disabled = true;
+            importButton.disabled = true;
+            parseButton.textContent = '正在解析…';
+            info.textContent = '正在解析文字，请稍候…';
+
+            try {
+                const result = await window.electronAPI.aiParseTasks(sourceText);
+                if (result?.error) {
+                    throw new Error(result.error);
+                }
+                aiPreviewTasks = (result?.tasks || []).map(task => ({ ...task, selected: true }));
+                if (aiPreviewTasks.length === 0) {
+                    info.textContent = '没有解析到明确的待办事项，可修改原文后重试。';
+                    previewList.innerHTML = '';
+                } else {
+                    info.textContent = '请确认任务内容；标题、日期、时间和优先级均可修改。';
+                    renderPreview();
+                }
+            } catch (parseError) {
+                aiPreviewTasks = [];
+                previewList.innerHTML = '';
+                showError(parseError.message || '解析失败，请稍后重试。');
+                updateImportButton();
+            } finally {
+                parseButton.disabled = false;
+                parseButton.textContent = '开始解析';
+            }
+        });
+
+        previewList.addEventListener('change', (event) => {
+            const index = Number(event.target.dataset.index);
+            if (!Number.isInteger(index) || !aiPreviewTasks[index]) return;
+
+            if (event.target.classList.contains('ai-preview-select')) {
+                aiPreviewTasks[index].selected = event.target.checked;
+            } else if (event.target.dataset.field) {
+                aiPreviewTasks[index][event.target.dataset.field] = event.target.value || null;
+            }
+            updateImportButton();
+        });
+        previewList.addEventListener('input', (event) => {
+            const index = Number(event.target.dataset.index);
+            if (event.target.dataset.field === 'title' && aiPreviewTasks[index]) {
+                aiPreviewTasks[index].title = event.target.value;
+            }
+        });
+
+        importButton.addEventListener('click', async () => {
+            const selectedTasks = aiPreviewTasks
+                .filter(task => task.selected && task.title?.trim())
+                .map(({ selected, ...task }) => ({
+                    ...task,
+                    id: generateId(),
+                    status: '待办',
+                    createdAt: new Date().toISOString()
+                }));
+            if (selectedTasks.length === 0) {
+                showError('请至少选择一项包含标题的任务。');
+                return;
+            }
+
+            clearError();
+            importButton.disabled = true;
+            importButton.textContent = '正在导入…';
+            try {
+                if (window.electronAPI?.saveTasksBatch) {
+                    tasks = await window.electronAPI.saveTasksBatch(selectedTasks);
+                } else {
+                    tasks.push(...selectedTasks);
+                }
+                renderTasks();
+                updateProgress();
+                if (currentView === 'calendar') renderCalendar();
+                closeModal();
+            } catch (saveError) {
+                showError(saveError.message || '导入失败，请稍后重试。');
+                updateImportButton();
+            }
+        });
+
+        sourceInput.focus();
+    }
+
     function getSelectedTaskTags() {
         const tagsInput = $('#input-task-tags');
         if (!tagsInput || !tagsInput.value) {
@@ -509,12 +632,29 @@
         const autoSyncToggle = $('#toggle-auto-sync');
         const minimizeToggle = $('#toggle-minimize-tray');
         const startWindowsToggle = $('#toggle-start-windows');
+        const aiBaseUrlInput = $('#input-ai-base-url');
+        const aiApiKeyInput = $('#input-ai-api-key');
+        const aiModelInput = $('#input-ai-model');
+        const aiApiKeyHint = $('#ai-api-key-hint');
 
         if (obsidianPathInput) obsidianPathInput.value = settings.obsidianPath || '';
         if (syncTimeInput) syncTimeInput.value = settings.syncTime || '08:00';
         if (autoSyncToggle) autoSyncToggle.checked = settings.autoSync !== false;
         if (minimizeToggle) minimizeToggle.checked = settings.minimizeToTray !== false;
         if (startWindowsToggle) startWindowsToggle.checked = settings.startWithWindows === true;
+        if (aiBaseUrlInput) aiBaseUrlInput.value = settings.ai?.baseUrl || 'https://api.deepseek.com';
+        if (aiModelInput) aiModelInput.value = settings.ai?.model || 'deepseek-chat';
+        if (aiApiKeyInput) {
+            aiApiKeyInput.value = '';
+            aiApiKeyInput.placeholder = settings.ai?.apiKeyConfigured
+                ? '已配置（留空不会修改）'
+                : '请输入 API Key';
+        }
+        if (aiApiKeyHint) {
+            aiApiKeyHint.textContent = settings.ai?.apiKeyConfigured
+                ? '已配置 API Key；如需替换，请输入新的 Key。'
+                : '尚未配置 API Key。';
+        }
     }
 
     // 渲染即将到来任务列表
@@ -1293,6 +1433,14 @@
         // 保留现有的 userTags 和 customColors
         const existingUserTags = settings.userTags;
         const existingCustomColors = settings.customColors;
+        const newApiKey = $('#input-ai-api-key')?.value.trim();
+        const aiSettings = {
+            baseUrl: $('#input-ai-base-url')?.value.trim() || 'https://api.deepseek.com',
+            model: $('#input-ai-model')?.value.trim() || 'deepseek-chat'
+        };
+        if (newApiKey) {
+            aiSettings.apiKey = newApiKey;
+        }
 
         settings = {
             ...settings, // 保留其他现有设置
@@ -1303,12 +1451,14 @@
             startWithWindows: $('#toggle-start-windows')?.checked ?? false,
             globalShortcut: settings.globalShortcut || 'Ctrl+Shift+O',
             userTags: existingUserTags,
-            customColors: existingCustomColors
+            customColors: existingCustomColors,
+            ai: aiSettings
         };
 
         if (window.electronAPI) {
-            await window.electronAPI.saveSettings(settings);
+            settings = await window.electronAPI.saveSettings(settings);
         }
+        loadSettingsToUI();
         showSyncStatus('saved');
     }
 
@@ -1325,6 +1475,9 @@
         $('#toggle-auto-sync').checked = true;
         $('#toggle-minimize-tray').checked = true;
         $('#toggle-start-windows').checked = false;
+        $('#input-ai-base-url').value = 'https://api.deepseek.com';
+        $('#input-ai-model').value = 'deepseek-chat';
+        $('#input-ai-api-key').value = '';
     }
 
     function showSyncStatus(type, detail) {

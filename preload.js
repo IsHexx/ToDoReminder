@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 任务操作
     getTasks: () => ipcRenderer.invoke('get-tasks'),
     saveTask: (task) => ipcRenderer.invoke('save-task', task),
+    saveTasksBatch: (tasks) => ipcRenderer.invoke('save-tasks', tasks),
     deleteTask: (taskId) => ipcRenderer.invoke('delete-task', taskId),
     updateTaskStatus: (taskId, status) => ipcRenderer.invoke('update-task-status', taskId, status),
 
@@ -12,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getSettings: () => ipcRenderer.invoke('get-settings'),
     saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
     getAppInfo: () => ipcRenderer.invoke('get-app-info'),
+    aiParseTasks: (text) => ipcRenderer.invoke('ai-parse-tasks', text),
 
     // 同步操作
     syncObsidian: () => ipcRenderer.invoke('sync-obsidian'),

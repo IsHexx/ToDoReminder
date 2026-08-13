@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut, nativeImage, di
 const path = require('path');
 const fs = require('fs');
 const { shouldRunAutoSync } = require('./src/main/scheduler');
+const { parseTextToTasks } = require('./src/main/ai');
 
 // 保持窗口引用，防止被垃圾回收
 let mainWindow = null;
@@ -15,6 +16,7 @@ const dataPath = path.join(userDataPath, 'data');
 const tasksFilePath = path.join(dataPath, 'tasks.json');
 const settingsFilePath = path.join(dataPath, 'settings.json');
 const REMINDER_GRACE_PERIOD_MS = 90 * 1000;
+const AI_QUICK_INPUT_SHORTCUT = 'Ctrl+Shift+I';
 const RELEASE_NOTES = [
     {
         version: '1.0.3',
@@ -67,7 +69,12 @@ const defaultSettings = {
     minimizeToTray: true,
     startWithWindows: false,
     globalShortcut: 'Ctrl+Shift+O',
-    theme: 'light'
+    theme: 'light',
+    ai: {
+        baseUrl: 'https://api.deepseek.com',
+        apiKey: '',
+        model: 'deepseek-chat'
+    }
 };
 
 // 加载设置
@@ -75,7 +82,12 @@ function loadSettings() {
     ensureDataDir();
     if (fs.existsSync(settingsFilePath)) {
         try {
-            return JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'));
+            const parsed = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'));
+            return {
+                ...defaultSettings,
+                ...parsed,
+                ai: { ...defaultSettings.ai, ...(parsed.ai || {}) }
+            };
         } catch (e) {
             return defaultSettings;
         }
@@ -87,6 +99,18 @@ function loadSettings() {
 function saveSettings(settings) {
     ensureDataDir();
     fs.writeFileSync(settingsFilePath, JSON.stringify(settings, null, 2), 'utf-8');
+}
+
+function getSettingsForRenderer() {
+    const settings = loadSettings();
+    const { apiKey, ...safeAiSettings } = settings.ai || {};
+    return {
+        ...settings,
+        ai: {
+            ...safeAiSettings,
+            apiKeyConfigured: Boolean(apiKey)
+        }
+    };
 }
 
 // 加载任务
@@ -180,8 +204,8 @@ function createQuickInputWindow() {
     }
 
     quickInputWindow = new BrowserWindow({
-        width: 640,
-        height: 280,
+        width: 720,
+        height: 560,
         frame: false,
         transparent: true,
         resizable: false,
@@ -391,6 +415,17 @@ function registerGlobalShortcut() {
 
     if (!registered) {
         console.error('快捷键注册失败:', shortcut);
+    }
+
+    // 独立的 AI 快速录入快捷键，保留用户原有的手动录入快捷键设置。
+    if (shortcut.toLowerCase() !== AI_QUICK_INPUT_SHORTCUT.toLowerCase()) {
+        const aiShortcutRegistered = globalShortcut.register(AI_QUICK_INPUT_SHORTCUT, () => {
+            createQuickInputWindow();
+        });
+
+        if (!aiShortcutRegistered) {
+            console.error('AI 快捷键注册失败:', AI_QUICK_INPUT_SHORTCUT);
+        }
     }
 }
 
@@ -638,6 +673,26 @@ ipcMain.handle('save-task', (event, task) => {
     return tasks;
 });
 
+ipcMain.handle('save-tasks', (event, newTasks) => {
+    if (!Array.isArray(newTasks)) {
+        throw new Error('批量保存的任务格式不正确');
+    }
+
+    const tasks = loadTasks();
+    const knownIds = new Set(tasks.map(task => task.id));
+
+    newTasks.forEach(task => {
+        if (!task || typeof task !== 'object' || !task.id || knownIds.has(task.id)) {
+            return;
+        }
+        knownIds.add(task.id);
+        tasks.push(task);
+    });
+
+    updateTaskListAndNotify(tasks);
+    return tasks;
+});
+
 ipcMain.handle('delete-task', (event, taskId) => {
     let tasks = loadTasks();
     tasks = tasks.filter(t => t.id !== taskId);
@@ -702,12 +757,16 @@ function createNextRepeatTask(task) {
 }
 
 ipcMain.handle('get-settings', () => {
-    return loadSettings();
+    return getSettingsForRenderer();
 });
 
 ipcMain.handle('save-settings', (event, settings) => {
     const previousSettings = loadSettings();
-    const nextSettings = { ...previousSettings, ...settings };
+    const nextSettings = {
+        ...previousSettings,
+        ...settings,
+        ai: { ...previousSettings.ai, ...(settings.ai || {}) }
+    };
 
     if (
         previousSettings.syncTime !== nextSettings.syncTime ||
@@ -718,7 +777,17 @@ ipcMain.handle('save-settings', (event, settings) => {
 
     saveSettings(nextSettings);
     registerGlobalShortcut();
-    return nextSettings;
+    return getSettingsForRenderer();
+});
+
+ipcMain.handle('ai-parse-tasks', async (event, text) => {
+    try {
+        const settings = loadSettings();
+        const tasks = await parseTextToTasks(text, settings.ai, formatLocalDate());
+        return { tasks };
+    } catch (error) {
+        return { error: error.message || 'AI 解析失败，请稍后重试' };
+    }
 });
 
 ipcMain.handle('sync-obsidian', () => {
