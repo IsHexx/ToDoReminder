@@ -19,6 +19,17 @@ const REMINDER_GRACE_PERIOD_MS = 90 * 1000;
 const AI_QUICK_INPUT_SHORTCUT = 'Ctrl+Shift+I';
 const RELEASE_NOTES = [
     {
+        version: '1.2.0',
+        date: '2026-08-19',
+        items: [
+            '提醒弹窗新增「延迟到明天」按钮，一键把任务推到明天同一时间',
+            '今日任务支持按时间 / 按优先级切换排序',
+            '日历中任务超过 3 个时可点击「+N 更多」查看当天全部任务',
+            '修复日历长任务标题挤压相邻格子的问题',
+            '界面配色焕新：乳白底搭配翡翠绿主题，阴影与文字配色更协调'
+        ]
+    },
+    {
         version: '1.0.3',
         date: '2026-06-08',
         items: [
@@ -584,6 +595,26 @@ function snoozeTask(taskId, minutes = 5) {
     return true;
 }
 
+function snoozeTaskToTomorrow(taskId) {
+    const tasks = loadTasks();
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+
+    if (taskIndex < 0) {
+        return false;
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    tasks[taskIndex].time = tasks[taskIndex].time || '09:00';
+    tasks[taskIndex].date = formatLocalDate(tomorrow);
+    tasks[taskIndex].status = '待办';
+    delete tasks[taskIndex].lastNotifiedAt;
+
+    updateTaskListAndNotify(tasks);
+    return true;
+}
+
 // 显示通知
 function showNotification(task) {
     createReminderWindow(task);
@@ -837,6 +868,13 @@ ipcMain.on('reminder-complete-task', (event, taskId) => {
 
 ipcMain.on('reminder-snooze-task', (event, taskId, minutes = 5) => {
     snoozeTask(taskId, minutes);
+
+    const reminderWindow = BrowserWindow.fromWebContents(event.sender);
+    closeReminderWindow(reminderWindow);
+});
+
+ipcMain.on('reminder-snooze-task-tomorrow', (event, taskId) => {
+    snoozeTaskToTomorrow(taskId);
 
     const reminderWindow = BrowserWindow.fromWebContents(event.sender);
     closeReminderWindow(reminderWindow);

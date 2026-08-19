@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     quickAddTask: (task) => ipcRenderer.send('quick-add-task', task),
     completeReminderTask: (taskId) => ipcRenderer.send('reminder-complete-task', taskId),
     snoozeReminderTask: (taskId, minutes) => ipcRenderer.send('reminder-snooze-task', taskId, minutes),
+    snoozeReminderTaskToTomorrow: (taskId) => ipcRenderer.send('reminder-snooze-task-tomorrow', taskId),
     openReminderMainWindow: () => ipcRenderer.send('reminder-open-main-window'),
     closeReminderWindow: () => ipcRenderer.send('reminder-close'),
 

@@ -12,6 +12,7 @@
     let currentCalendarDate = new Date();
     let editingTaskId = null;
     let currentFilter = { type: null, value: null }; // 当前筛选条件
+    let taskSortMode = 'time'; // 今日任务排序方式：time | priority
     let appInfo = { version: '', releaseNotes: [] };
     let aiPreviewTasks = [];
 
@@ -180,6 +181,12 @@
 
         // 筛选菜单
         $('#btn-more')?.addEventListener('click', (e) => showFilterMenu(e));
+
+        $('#btn-sort')?.addEventListener('click', () => {
+            taskSortMode = taskSortMode === 'time' ? 'priority' : 'time';
+            updateSortButton();
+            renderTasks();
+        });
 
         // 设置默认日期为今天
         const today = formatLocalDate();
@@ -893,6 +900,18 @@
         return applyCurrentTaskFilter(getTodayTasks());
     }
 
+    // 更新排序按钮状态提示
+    function updateSortButton() {
+        const btn = $('#btn-sort');
+        if (!btn) return;
+
+        const byPriority = taskSortMode === 'priority';
+        btn.title = byPriority ? '按优先级排序（点击切换为按时间）' : '按时间排序（点击切换为按优先级）';
+        btn.classList.toggle('text-primary', byPriority);
+        btn.classList.toggle('bg-primary/10', byPriority);
+        btn.classList.toggle('text-text-sub', !byPriority);
+    }
+
     // 渲染任务列表
     function renderTasks() {
         const taskList = $('#task-list');
@@ -914,8 +933,13 @@
 
         emptyState.classList.add('hidden');
 
-        // 按时间排序
+        // 排序（默认按时间，可切换为按优先级）
         filteredTasks.sort((a, b) => {
+            if (taskSortMode === 'priority') {
+                const order = { '高': 0, '中': 1, '低': 2 };
+                const diff = (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
+                if (diff !== 0) return diff;
+            }
             if (!a.time) return 1;
             if (!b.time) return -1;
             return a.time.localeCompare(b.time);
@@ -1209,7 +1233,7 @@
             taskHtml += '</div>';
 
             if (dayTasks.length > 3) {
-                taskHtml += `<div class="text-[10px] text-text-sub text-center mt-1">+${dayTasks.length - 3} 更多</div>`;
+                taskHtml += `<button type="button" class="calendar-more-btn" data-date="${dateStr}">+${dayTasks.length - 3} 更多</button>`;
             }
 
             html += `<div class="calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">
@@ -1232,6 +1256,14 @@
             task.addEventListener('click', (e) => {
                 const taskId = e.target.closest('.calendar-task').dataset.id;
                 if (taskId) editTask(taskId);
+            });
+        });
+
+        // 绑定“+N 更多”点击事件
+        grid.querySelectorAll('.calendar-more-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showDayTasksModal(btn.dataset.date);
             });
         });
     }
@@ -1303,6 +1335,55 @@
             task.addEventListener('click', (e) => {
                 const taskId = e.target.closest('.calendar-task').dataset.id;
                 if (taskId) editTask(taskId);
+            });
+        });
+    }
+
+    // 显示某一天全部任务的弹窗（日历“+N 更多”入口）
+    function showDayTasksModal(dateStr) {
+        const existingModal = document.getElementById('day-tasks-modal');
+        if (existingModal) existingModal.remove();
+
+        const date = new Date(dateStr + 'T00:00:00');
+        const title = date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+        const dayTasks = tasks.filter(t => t.date === dateStr);
+
+        const modal = document.createElement('div');
+        modal.id = 'day-tasks-modal';
+        modal.className = 'fixed inset-0 bg-black/40 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-border-subtle dark:border-gray-700 overflow-hidden">
+                <div class="px-5 pt-4 pb-3 border-b border-border-subtle dark:border-gray-700 flex items-center justify-between">
+                    <h4 class="text-base font-bold text-text-main dark:text-white">${title}</h4>
+                    <button id="day-tasks-close-btn" class="text-text-sub hover:text-text-main rounded-md p-1 transition-colors" aria-label="关闭">
+                        <span class="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
+                <div class="px-3 py-3 overflow-y-auto space-y-2" style="max-height: 60vh;">
+                    ${dayTasks.map(task => {
+                        const dotColor = task.priority === '高' ? '#ef4444' : task.priority === '低' ? 'var(--tertiary)' : 'var(--secondary)';
+                        return `
+                            <div class="day-task-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors" data-id="${task.id}">
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: ${dotColor}"></span>
+                                <span class="flex-1 min-w-0 truncate text-sm font-medium ${task.status === '完成' ? 'line-through text-text-sub' : 'text-text-main'}">${escapeHtml(task.title)}</span>
+                                ${task.time ? `<span class="text-xs font-mono text-text-sub shrink-0">${task.time}</span>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.remove();
+        modal.querySelector('#day-tasks-close-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        modal.querySelectorAll('.day-task-item').forEach(item => {
+            item.addEventListener('click', () => {
+                closeModal();
+                editTask(item.dataset.id);
             });
         });
     }
