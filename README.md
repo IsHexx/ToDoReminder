@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Windows 待办事项管理应用</strong><br>
-  本地优先 · Obsidian 同步 · 极简设计
+  本地优先 · Obsidian 同步 · AI 智能生成 · 极简设计
 </p>
 
 <p align="center">
@@ -20,6 +20,13 @@
 ---
 
 ## ✨ 功能特性
+
+### 🤖 AI 智能生成
+- 粘贴自然语言文本（聊天记录、会议纪要、工作安排）
+- AI 自动解析为结构化待办（标题、日期、时间、优先级、标签、重复周期）
+- 预览编辑后批量创建任务
+- 支持 DeepSeek、Kimi、OpenAI 等 OpenAI 格式接口
+- API Key 本地加密存储，安全可靠
 
 ### 📋 任务管理
 - 创建、编辑、删除任务
